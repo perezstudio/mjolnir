@@ -157,10 +157,11 @@ struct InspectorView: View {
 
             // Commit message input + push button
             HStack(spacing: 8) {
-                VStack(spacing: 8) {
+                VStack(spacing: 0) {
                     TextField("Commit message...", text: $viewModel.commitMessage, axis: .vertical)
                         .textFieldStyle(.plain)
                         .lineLimit(1...5)
+                        .padding(12)
 
                     HStack(spacing: 8) {
                         // Generate commit message button
@@ -168,7 +169,7 @@ struct InspectorView: View {
                             viewModel.generateCommitMessage(workingDirectory: workingDirectory)
                         } label: {
                             Image(systemName: "wand.and.sparkles.inverse")
-                                .font(.system(size: 14))
+                                .font(.system(size: 12))
                                 .foregroundStyle(Color.accentColor)
                                 .symbolEffect(.pulse, isActive: viewModel.isGeneratingMessage)
                         }
@@ -183,7 +184,7 @@ struct InspectorView: View {
                             viewModel.performCommit(workingDirectory: workingDirectory)
                         } label: {
                             Image(systemName: "arrow.up.circle.fill")
-                                .font(.system(size: 22))
+                                .font(.system(size: 18))
                                 .foregroundStyle(
                                     canCommit ? Color.accentColor : Color.secondary
                                 )
@@ -192,8 +193,9 @@ struct InspectorView: View {
                         .disabled(!canCommit)
                         .help("Commit changes")
                     }
+                    .padding(.horizontal, 12)
+                    .padding(.bottom, 8)
                 }
-                .padding(12)
                 .background(.bar)
                 .clipShape(RoundedRectangle(cornerRadius: 8))
 
