@@ -6,6 +6,7 @@ struct ChatView: View {
     @Bindable var appState: AppState
     @State private var viewModel = ChatViewModel()
     @State private var terminalManager = TerminalManager()
+    @State private var terminalHeight: CGFloat = 200
     @State private var showRunCommandSheet = false
     @State private var runCommandDraft = ""
 
@@ -61,15 +62,26 @@ struct ChatView: View {
         )
 
         // Terminal area — below the input, at the very bottom
-        TerminalAreaView(
-            manager: terminalManager,
-            workingDirectory: chat.workingDirectory
-        )
-        .frame(height: appState.isTerminalVisible ? 200 : 0)
-        .clipped()
-        .animation(.easeInOut(duration: 0.2), value: appState.isTerminalVisible)
+        if appState.isTerminalVisible {
+            // Vertical resize handle
+            ResizeHandle(axis: .vertical)
+                .gesture(
+                    DragGesture(minimumDistance: 1)
+                        .onChanged { value in
+                            let newHeight = terminalHeight - value.translation.height
+                            terminalHeight = max(80, min(600, newHeight))
+                        }
+                )
 
-        // Run command configuration sheet
+            TerminalAreaView(
+                manager: terminalManager,
+                workingDirectory: chat.workingDirectory
+            )
+            .frame(height: terminalHeight)
+        }
+
+        // Run command configuration sheet — attached to the outer VStack via EmptyView trick
+        Color.clear.frame(height: 0)
         .sheet(isPresented: $showRunCommandSheet) {
             runCommandSheet(chat: chat)
         }

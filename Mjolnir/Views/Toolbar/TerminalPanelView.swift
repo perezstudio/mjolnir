@@ -6,6 +6,7 @@ import SwiftTerm
 struct MultiTerminalView: NSViewRepresentable {
     let sessions: [TerminalSession]
     let activeSessionID: UUID?
+    let theme: TerminalTheme
 
     func makeCoordinator() -> Coordinator {
         Coordinator()
@@ -27,6 +28,7 @@ struct MultiTerminalView: NSViewRepresentable {
                 let termView = LocalProcessTerminalView(frame: container.bounds)
                 termView.processDelegate = coordinator
                 termView.autoresizingMask = [.width, .height]
+                applyTheme(theme, to: termView)
                 container.addSubview(termView)
                 coordinator.terminals[session.id] = termView
                 coordinator.viewToSession[ObjectIdentifier(termView)] = session.id
@@ -46,7 +48,6 @@ struct MultiTerminalView: NSViewRepresentable {
                 }
             } else if let command = session.pendingCommand,
                       let termView = coordinator.terminals[session.id] {
-                // Deliver later commands immediately
                 let bytes = Array((command + "\n").utf8)
                 termView.send(source: termView, data: bytes[...])
                 session.pendingCommand = nil
@@ -71,7 +72,14 @@ struct MultiTerminalView: NSViewRepresentable {
             }
         }
 
-        // Store session references for title updates
+        // Apply theme if changed
+        if coordinator.currentTheme != theme {
+            coordinator.currentTheme = theme
+            for (_, view) in coordinator.terminals {
+                applyTheme(theme, to: view)
+            }
+        }
+
         coordinator.sessions = sessions
     }
 
@@ -82,12 +90,20 @@ struct MultiTerminalView: NSViewRepresentable {
         coordinator.terminals.removeAll()
     }
 
+    private func applyTheme(_ theme: TerminalTheme, to termView: LocalProcessTerminalView) {
+        termView.nativeBackgroundColor = theme.backgroundColor
+        termView.nativeForegroundColor = theme.foregroundColor
+        termView.caretColor = theme.caretColor
+        termView.needsDisplay = true
+    }
+
     // MARK: - Coordinator
 
     final class Coordinator: NSObject, LocalProcessTerminalViewDelegate {
         var terminals: [UUID: LocalProcessTerminalView] = [:]
         var viewToSession: [ObjectIdentifier: UUID] = [:]
         var sessions: [TerminalSession] = []
+        var currentTheme: TerminalTheme?
 
         func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
 

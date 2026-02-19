@@ -8,16 +8,25 @@ struct TerminalAreaView: View {
         HStack(spacing: 0) {
             // Left: terminal session list
             sessionList
-                .frame(width: 140)
+                .frame(width: manager.sidebarWidth)
                 .background(Color(nsColor: .controlBackgroundColor))
 
-            Divider()
+            // Horizontal resize handle
+            ResizeHandle(axis: .horizontal)
+                .gesture(
+                    DragGesture(minimumDistance: 1)
+                        .onChanged { value in
+                            let newWidth = manager.sidebarWidth + value.translation.width
+                            manager.sidebarWidth = max(80, min(300, newWidth))
+                        }
+                )
 
             // Right: active terminal
             if !manager.sessions.isEmpty {
                 MultiTerminalView(
                     sessions: manager.sessions,
-                    activeSessionID: manager.activeSessionID
+                    activeSessionID: manager.activeSessionID,
+                    theme: manager.theme
                 )
             } else {
                 emptyState
@@ -34,6 +43,18 @@ struct TerminalAreaView: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
+
+                // Theme toggle
+                Button {
+                    manager.theme = manager.theme == .dark ? .light : .dark
+                } label: {
+                    Image(systemName: manager.theme == .dark ? "sun.max" : "moon")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                .buttonStyle(.plain)
+                .help(manager.theme == .dark ? "Switch to Light" : "Switch to Dark")
+
                 Button {
                     manager.addSession(workingDirectory: workingDirectory)
                 } label: {
@@ -114,5 +135,48 @@ struct TerminalSessionRow: View {
         .contentShape(Rectangle())
         .onTapGesture { onSelect() }
         .onHover { isHovered = $0 }
+    }
+}
+
+// MARK: - Resize Handle
+
+struct ResizeHandle: View {
+    enum Axis { case horizontal, vertical }
+    let axis: Axis
+
+    @State private var isHovered = false
+
+    var body: some View {
+        Group {
+            switch axis {
+            case .horizontal:
+                Rectangle()
+                    .fill(isHovered ? Color.accentColor.opacity(0.5) : Color(nsColor: .separatorColor))
+                    .frame(width: 4)
+                    .frame(maxHeight: .infinity)
+                    .onHover { hovering in
+                        isHovered = hovering
+                        if hovering {
+                            NSCursor.resizeLeftRight.push()
+                        } else {
+                            NSCursor.pop()
+                        }
+                    }
+            case .vertical:
+                Rectangle()
+                    .fill(isHovered ? Color.accentColor.opacity(0.5) : Color(nsColor: .separatorColor))
+                    .frame(height: 4)
+                    .frame(maxWidth: .infinity)
+                    .onHover { hovering in
+                        isHovered = hovering
+                        if hovering {
+                            NSCursor.resizeUpDown.push()
+                        } else {
+                            NSCursor.pop()
+                        }
+                    }
+            }
+        }
+        .contentShape(Rectangle())
     }
 }
