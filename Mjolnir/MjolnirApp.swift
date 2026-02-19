@@ -1,10 +1,3 @@
-//
-//  MjolnirApp.swift
-//  Mjolnir
-//
-//  Created by Keviruchis on 2/18/26.
-//
-
 import SwiftUI
 import SwiftData
 
@@ -12,7 +5,11 @@ import SwiftData
 struct MjolnirApp: App {
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
-            Item.self,
+            Project.self,
+            Chat.self,
+            Message.self,
+            ToolCall.self,
+            UserSettings.self,
         ])
         let modelConfiguration = ModelConfiguration(schema: schema, isStoredInMemoryOnly: false)
 
@@ -25,8 +22,13 @@ struct MjolnirApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            MainWindowView()
         }
         .modelContainer(sharedModelContainer)
+
+        Settings {
+            Text("Settings")
+                .frame(width: 400, height: 300)
+        }
     }
 }
