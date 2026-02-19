@@ -14,14 +14,16 @@ struct ChatHeaderView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                Button {
-                    appState.isSidebarVisible.toggle()
-                } label: {
-                    Image(systemName: "sidebar.leading")
-                        .foregroundStyle(appState.isSidebarVisible ? Color.accentColor : Color.secondary)
+                if !appState.isSidebarVisible {
+                    Button {
+                        appState.isSidebarVisible = true
+                    } label: {
+                        Image(systemName: "sidebar.leading")
+                            .foregroundStyle(Color.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Show Sidebar")
                 }
-                .buttonStyle(.plain)
-                .help(appState.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar")
 
                 if isEditingTitle {
                     TextField("Chat title", text: $editedTitle)
@@ -114,14 +116,16 @@ struct ChatHeaderView: View {
                     .help("Cancel generation")
                 }
 
-                Button {
-                    appState.isInspectorVisible.toggle()
-                } label: {
-                    Image(systemName: "sidebar.trailing")
-                        .foregroundStyle(appState.isInspectorVisible ? Color.accentColor : Color.secondary)
+                if !appState.isInspectorVisible {
+                    Button {
+                        appState.isInspectorVisible = true
+                    } label: {
+                        Image(systemName: "sidebar.trailing")
+                            .foregroundStyle(Color.secondary)
+                    }
+                    .buttonStyle(.plain)
+                    .help("Show Inspector")
                 }
-                .buttonStyle(.plain)
-                .help(appState.isInspectorVisible ? "Hide Inspector" : "Show Inspector")
             }
             .padding(.leading, appState.isSidebarVisible ? 16 : TitleBarMetrics.standard.trafficLightInset)
             .padding(.trailing, 16)
