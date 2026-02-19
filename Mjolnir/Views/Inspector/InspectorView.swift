@@ -132,10 +132,9 @@ struct InspectorView: View {
 
     @ViewBuilder
     private var inspectorBottomArea: some View {
-        VStack(spacing: 0) {
-            // Discard button — full width, animated show/hide
+        VStack(spacing: 8) {
+            // Discard button — inset, rounded, animated show/hide
             if !viewModel.modifiedFiles.isEmpty {
-                Divider()
                 Button {
                     viewModel.showingDiscardConfirmation = true
                 } label: {
@@ -149,22 +148,18 @@ struct InspectorView: View {
                     .padding(.vertical, 8)
                     .foregroundStyle(.white)
                     .background(.red)
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
                 .buttonStyle(.plain)
                 .contentShape(Rectangle())
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            Divider()
-
-            // Commit message input
-            VStack(spacing: 12) {
+            // Commit message input with buttons inside
+            VStack(spacing: 8) {
                 TextField("Commit message...", text: $viewModel.commitMessage, axis: .vertical)
                     .textFieldStyle(.plain)
                     .lineLimit(1...5)
-                    .padding(12)
-                    .background(.bar)
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
 
                 HStack(spacing: 8) {
                     // Generate commit message button
@@ -230,7 +225,10 @@ struct InspectorView: View {
                 }
             }
             .padding(12)
+            .background(.bar)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
+        .padding(12)
         .animation(.easeInOut(duration: 0.2), value: viewModel.modifiedFiles.isEmpty)
         .animation(.easeInOut(duration: 0.2), value: viewModel.commitsAhead)
     }
