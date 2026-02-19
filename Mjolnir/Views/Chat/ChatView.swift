@@ -27,6 +27,7 @@ struct ChatView: View {
     private func chatContent(for chat: Chat) -> some View {
         ChatHeaderView(
             chat: chat,
+            appState: appState,
             isProcessing: viewModel.isProcessing,
             onCancel: { viewModel.cancelGeneration() }
         )

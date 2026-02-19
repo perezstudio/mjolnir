@@ -7,10 +7,13 @@ class MainSplitViewController: NSSplitViewController {
     private let chatVC = ChatViewController()
     private let inspectorVC = InspectorViewController()
 
+    private var observationTask: Task<Void, Never>?
+
     var modelContainer: ModelContainer? {
         didSet {
             sidebarVC.modelContainer = modelContainer
             chatVC.modelContainer = modelContainer
+            inspectorVC.modelContainer = modelContainer
         }
     }
 
@@ -18,6 +21,8 @@ class MainSplitViewController: NSSplitViewController {
         didSet {
             sidebarVC.appState = appState
             chatVC.appState = appState
+            inspectorVC.appState = appState
+            startObservingInspectorVisibility()
         }
     }
 
@@ -50,5 +55,31 @@ class MainSplitViewController: NSSplitViewController {
         guard let window = view.window else { return }
         window.titlebarSeparatorStyle = .none
         window.toolbar = nil
+    }
+
+    // MARK: - Inspector Visibility Observation
+
+    private func startObservingInspectorVisibility() {
+        observationTask?.cancel()
+        observationTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self, let appState = self.appState else { return }
+                let isVisible = appState.isInspectorVisible
+
+                if let inspectorItem = self.splitViewItems.last {
+                    if inspectorItem.isCollapsed == isVisible {
+                        inspectorItem.animator().isCollapsed = !isVisible
+                    }
+                }
+
+                await withCheckedContinuation { continuation in
+                    withObservationTracking {
+                        _ = appState.isInspectorVisible
+                    } onChange: {
+                        continuation.resume()
+                    }
+                }
+            }
+        }
     }
 }

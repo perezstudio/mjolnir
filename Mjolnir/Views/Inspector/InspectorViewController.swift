@@ -1,23 +1,45 @@
 import AppKit
+import SwiftUI
+import SwiftData
 
 class InspectorViewController: NSViewController {
+
+    var modelContainer: ModelContainer?
+    var appState: AppState?
+
+    private var hostingView: NSHostingView<AnyView>?
+
     override func loadView() {
-        // NSVisualEffectView for the inspector — matches sidebar vibrancy
         let effectView = NSVisualEffectView()
         effectView.material = .sidebar
         effectView.blendingMode = .behindWindow
         effectView.state = .followsWindowActiveState
+        self.view = effectView
+    }
 
-        let label = NSTextField(labelWithString: "Inspector")
-        label.translatesAutoresizingMaskIntoConstraints = false
-        label.textColor = .secondaryLabelColor
-        effectView.addSubview(label)
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        setupHostingView()
+    }
 
+    private func setupHostingView() {
+        guard let modelContainer, let appState else { return }
+
+        let inspectorView = InspectorView(appState: appState)
+            .ignoresSafeArea()
+            .modelContainer(modelContainer)
+
+        let hosting = NSHostingView(rootView: AnyView(inspectorView))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+
+        view.addSubview(hosting)
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: effectView.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: effectView.centerYAnchor),
+            hosting.topAnchor.constraint(equalTo: view.topAnchor),
+            hosting.leadingAnchor.constraint(equalTo: view.leadingAnchor),
+            hosting.trailingAnchor.constraint(equalTo: view.trailingAnchor),
+            hosting.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
 
-        self.view = effectView
+        self.hostingView = hosting
     }
 }

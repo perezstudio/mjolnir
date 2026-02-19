@@ -2,6 +2,7 @@ import SwiftUI
 
 struct ChatHeaderView: View {
     @Bindable var chat: Chat
+    @Bindable var appState: AppState
     let isProcessing: Bool
     let onCancel: () -> Void
 
@@ -46,9 +47,25 @@ struct ChatHeaderView: View {
                 .buttonStyle(.plain)
                 .help("Cancel generation")
             }
+
+            // Show toggle only when inspector is hidden
+            if !appState.isInspectorVisible {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        appState.isInspectorVisible = true
+                    }
+                } label: {
+                    Image(systemName: "sidebar.trailing")
+                        .foregroundStyle(Color.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Show Inspector")
+                .transition(.move(edge: .trailing).combined(with: .opacity))
+            }
         }
         .padding(.horizontal, 16)
         .frame(height: 52)
+        .animation(.easeInOut(duration: 0.2), value: appState.isInspectorVisible)
     }
 }
 
