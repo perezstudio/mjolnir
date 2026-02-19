@@ -70,7 +70,6 @@ struct ModifiedFileRow: View {
         case .added: return .green
         case .modified: return .yellow
         case .deleted: return .red
-        case .untracked: return .gray
         case .renamed: return .blue
         }
     }

@@ -92,7 +92,7 @@ final class InspectorViewModel {
         Task {
             do {
                 let oldContent: String
-                if file.displayStatus == .untracked {
+                if file.isUntracked {
                     oldContent = ""
                 } else {
                     oldContent = (try? await gitService.fileContent(

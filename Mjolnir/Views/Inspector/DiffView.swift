@@ -43,7 +43,9 @@ struct DiffView: View {
     let oldContent: String
     let newContent: String
 
-    @State private var scrollOffset: CGFloat = 0
+    private var fileExtension: String {
+        (filePath as NSString).pathExtension
+    }
 
     private var diffResult: DiffResult {
         computeDiff(old: oldContent, new: newContent)
@@ -85,7 +87,8 @@ struct DiffView: View {
                                     lineNumber: line.oldLineNumber,
                                     text: line.oldText,
                                     type: line.type,
-                                    side: .old
+                                    side: .old,
+                                    fileExtension: fileExtension
                                 )
                             }
                         }
@@ -100,7 +103,8 @@ struct DiffView: View {
                                     lineNumber: line.newLineNumber,
                                     text: line.newText,
                                     type: line.type,
-                                    side: .new
+                                    side: .new,
+                                    fileExtension: fileExtension
                                 )
                             }
                         }
@@ -126,6 +130,7 @@ struct DiffLinePaneView: View {
     let text: String?
     let type: DiffLineType
     let side: DiffSide
+    let fileExtension: String
 
     var body: some View {
         HStack(spacing: 0) {
@@ -136,12 +141,16 @@ struct DiffLinePaneView: View {
                 .frame(width: 40, alignment: .trailing)
                 .padding(.trailing, 8)
 
-            // Content
-            Text(text ?? "")
-                .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(text != nil ? Color.primary : Color.clear)
-                .textSelection(.enabled)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            // Content with syntax highlighting
+            if let text {
+                Text(SyntaxHighlighter.highlight(text, fileExtension: fileExtension))
+                    .textSelection(.enabled)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Text("")
+                    .font(.system(size: 12, design: .monospaced))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
         }
         .padding(.vertical, 1)
         .padding(.trailing, 4)

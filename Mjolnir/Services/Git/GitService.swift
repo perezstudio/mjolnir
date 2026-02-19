@@ -9,11 +9,15 @@ struct GitFileStatus: Identifiable, Hashable {
     let workTreeStatus: Character
 
     var displayStatus: FileChangeStatus {
-        if workTreeStatus == "?" { return .untracked }
+        if workTreeStatus == "?" { return .added }
         if workTreeStatus == "D" || indexStatus == "D" { return .deleted }
         if workTreeStatus == "A" || indexStatus == "A" { return .added }
         if indexStatus == "R" { return .renamed }
         return .modified
+    }
+
+    var isUntracked: Bool {
+        workTreeStatus == "?"
     }
 
     var isStaged: Bool {
@@ -25,7 +29,6 @@ enum FileChangeStatus: String {
     case added = "A"
     case modified = "M"
     case deleted = "D"
-    case untracked = "?"
     case renamed = "R"
 
     var label: String { rawValue }
