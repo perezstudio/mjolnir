@@ -10,7 +10,7 @@ struct ChatView: View {
     @State private var runCommandDraft = ""
 
     var body: some View {
-        VStack(spacing: 0) {
+        Group {
             if let chat = appState.selectedChat {
                 chatContent(for: chat)
             } else {
@@ -27,34 +27,49 @@ struct ChatView: View {
 
     // MARK: - Chat Content
 
-    @ViewBuilder
     private func chatContent(for chat: Chat) -> some View {
-        ChatHeaderView(
-            chat: chat,
-            appState: appState,
-            isProcessing: viewModel.isProcessing,
-            onCancel: { viewModel.cancelGeneration() },
-            onRunCommand: { handleRunCommand(chat: chat) },
-            onConfigureRunCommand: { showRunSettings(chat: chat) }
-        )
-        Divider()
         messageList(for: chat)
+            .safeAreaInset(edge: .top, spacing: 0) {
+                ChatHeaderView(
+                    chat: chat,
+                    appState: appState,
+                    isProcessing: viewModel.isProcessing,
+                    onCancel: { viewModel.cancelGeneration() },
+                    onRunCommand: { handleRunCommand(chat: chat) },
+                    onConfigureRunCommand: { showRunSettings(chat: chat) }
+                )
+            }
+            .safeAreaInset(edge: .bottom, spacing: 0) {
+                floatingInputArea(for: chat)
+            }
+            .sheet(isPresented: $showRunCommandSheet) {
+                runCommandSheet(chat: chat)
+            }
+    }
 
-        if let error = viewModel.errorMessage {
-            errorBanner(error)
-        }
+    // MARK: - Floating Input Area
 
-        Divider()
-        ChatInputView(
-            text: $viewModel.inputText,
-            selectedModel: $viewModel.selectedModel,
-            permissionMode: $viewModel.permissionMode,
-            isProcessing: viewModel.isProcessing,
-            onSend: { viewModel.sendMessage(chat: chat, modelContext: modelContext) },
-            onCancel: { viewModel.cancelGeneration() }
-        )
-        .sheet(isPresented: $showRunCommandSheet) {
-            runCommandSheet(chat: chat)
+    private func floatingInputArea(for chat: Chat) -> some View {
+        VStack(spacing: 8) {
+            if let error = viewModel.errorMessage {
+                errorBanner(error)
+                    .padding(.horizontal, 16)
+            }
+
+            ChatInputView(
+                text: $viewModel.inputText,
+                selectedModel: $viewModel.selectedModel,
+                permissionMode: $viewModel.permissionMode,
+                isProcessing: viewModel.isProcessing,
+                onSend: { viewModel.sendMessage(chat: chat, modelContext: modelContext) },
+                onCancel: { viewModel.cancelGeneration() }
+            )
+            .background(.ultraThinMaterial)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.primary.opacity(0.1)))
+            .shadow(color: .black.opacity(0.15), radius: 8, y: -2)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
         }
     }
 
@@ -114,6 +129,7 @@ struct ChatView: View {
     private func messageList(for chat: Chat) -> some View {
         ScrollViewReader { proxy in
             ScrollView {
+                Spacer()
                 LazyVStack(spacing: 12) {
                     let sorted = chat.messages.sorted { $0.createdAt < $1.createdAt }
                     ForEach(sorted) { message in
@@ -131,9 +147,10 @@ struct ChatView: View {
                         .id("streaming")
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 12)
+                .padding(16)
+                .frame(maxWidth: .infinity)
             }
+            .defaultScrollAnchor(.bottom)
             .onChange(of: viewModel.streamingText) { _, _ in
                 withAnimation(.easeOut(duration: 0.1)) {
                     proxy.scrollTo("streaming", anchor: .bottom)
@@ -182,5 +199,6 @@ struct ChatView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 8)
         .background(Color.red.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
     }
 }
