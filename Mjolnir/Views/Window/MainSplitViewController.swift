@@ -1,15 +1,27 @@
 import AppKit
+import SwiftData
 
 class MainSplitViewController: NSSplitViewController {
 
-    private let sidebarVC = SidebarViewController()
+    let sidebarVC = SidebarViewController()
     private let chatVC = ChatViewController()
     private let inspectorVC = InspectorViewController()
+
+    var modelContainer: ModelContainer? {
+        didSet {
+            sidebarVC.modelContainer = modelContainer
+        }
+    }
+
+    var appState: AppState? {
+        didSet {
+            sidebarVC.appState = appState
+        }
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Use plain viewController init for ALL items to avoid system sidebar/inspector styling
         let sidebarItem = NSSplitViewItem(viewController: sidebarVC)
         sidebarItem.canCollapse = true
         sidebarItem.minimumThickness = 220
@@ -33,26 +45,8 @@ class MainSplitViewController: NSSplitViewController {
 
     override func viewDidAppear() {
         super.viewDidAppear()
-        configureWindow()
-    }
-
-    private func configureWindow() {
         guard let window = view.window else { return }
-
-        // Remove the titlebar entirely — content owns the full window
-        window.styleMask.insert(.fullSizeContentView)
-        window.titlebarAppearsTransparent = true
-        window.titleVisibility = .hidden
-
-        // Hide the toolbar so SwiftUI/AppKit don't inject one
+        window.titlebarSeparatorStyle = .none
         window.toolbar = nil
-
-        // Hide titlebar traffic-light buttons' background
-        window.standardWindowButton(.closeButton)?.superview?.superview?.isHidden = false
-
-        // Move traffic lights down a bit so they sit nicely in the sidebar header area
-        if let closeButton = window.standardWindowButton(.closeButton) {
-            closeButton.superview?.frame.origin.y = -4
-        }
     }
 }

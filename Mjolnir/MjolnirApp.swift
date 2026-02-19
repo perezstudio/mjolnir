@@ -24,6 +24,7 @@ struct MjolnirApp: App {
         WindowGroup {
             MainWindowView()
         }
+        .windowStyle(.hiddenTitleBar)
         .modelContainer(sharedModelContainer)
 
         Settings {

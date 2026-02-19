@@ -1,11 +1,12 @@
 import SwiftUI
 
 struct MainWindowView: View {
+    @State private var appState = AppState()
+
     var body: some View {
-        WindowRepresentable()
+        WindowRepresentable(appState: appState)
             .ignoresSafeArea()
+            .edgeToEdgeWindow()
             .frame(minWidth: 900, minHeight: 600)
-            .toolbar(removing: .title)
-            .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
     }
 }
