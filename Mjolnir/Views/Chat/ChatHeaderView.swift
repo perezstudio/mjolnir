@@ -11,6 +11,21 @@ struct ChatHeaderView: View {
 
     var body: some View {
         HStack(spacing: 12) {
+            // Show sidebar toggle only when sidebar is hidden
+            if !appState.isSidebarVisible {
+                Button {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        appState.isSidebarVisible = true
+                    }
+                } label: {
+                    Image(systemName: "sidebar.leading")
+                        .foregroundStyle(Color.secondary)
+                }
+                .buttonStyle(.plain)
+                .help("Show Sidebar")
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            }
+
             if isEditingTitle {
                 TextField("Chat title", text: $editedTitle)
                     .textFieldStyle(.roundedBorder)
@@ -65,6 +80,7 @@ struct ChatHeaderView: View {
         }
         .padding(.horizontal, 16)
         .frame(height: 52)
+        .animation(.easeInOut(duration: 0.2), value: appState.isSidebarVisible)
         .animation(.easeInOut(duration: 0.2), value: appState.isInspectorVisible)
     }
 }

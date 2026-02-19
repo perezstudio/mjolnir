@@ -22,7 +22,7 @@ class MainSplitViewController: NSSplitViewController {
             sidebarVC.appState = appState
             chatVC.appState = appState
             inspectorVC.appState = appState
-            startObservingInspectorVisibility()
+            startObservingPanelVisibility()
         }
     }
 
@@ -57,23 +57,33 @@ class MainSplitViewController: NSSplitViewController {
         window.toolbar = nil
     }
 
-    // MARK: - Inspector Visibility Observation
+    // MARK: - Panel Visibility Observation
 
-    private func startObservingInspectorVisibility() {
+    private func startObservingPanelVisibility() {
         observationTask?.cancel()
         observationTask = Task { @MainActor [weak self] in
             while !Task.isCancelled {
                 guard let self, let appState = self.appState else { return }
-                let isVisible = appState.isInspectorVisible
 
+                // Sync sidebar visibility
+                let sidebarVisible = appState.isSidebarVisible
+                if let sidebarItem = self.splitViewItems.first {
+                    if sidebarItem.isCollapsed == sidebarVisible {
+                        sidebarItem.animator().isCollapsed = !sidebarVisible
+                    }
+                }
+
+                // Sync inspector visibility
+                let inspectorVisible = appState.isInspectorVisible
                 if let inspectorItem = self.splitViewItems.last {
-                    if inspectorItem.isCollapsed == isVisible {
-                        inspectorItem.animator().isCollapsed = !isVisible
+                    if inspectorItem.isCollapsed == inspectorVisible {
+                        inspectorItem.animator().isCollapsed = !inspectorVisible
                     }
                 }
 
                 await withCheckedContinuation { continuation in
                     withObservationTracking {
+                        _ = appState.isSidebarVisible
                         _ = appState.isInspectorVisible
                     } onChange: {
                         continuation.resume()

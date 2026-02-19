@@ -155,78 +155,81 @@ struct InspectorView: View {
                 .transition(.move(edge: .bottom).combined(with: .opacity))
             }
 
-            // Commit message input with buttons inside
-            VStack(spacing: 8) {
-                TextField("Commit message...", text: $viewModel.commitMessage, axis: .vertical)
-                    .textFieldStyle(.plain)
-                    .lineLimit(1...5)
+            // Commit message input + push button
+            HStack(spacing: 8) {
+                VStack(spacing: 8) {
+                    TextField("Commit message...", text: $viewModel.commitMessage, axis: .vertical)
+                        .textFieldStyle(.plain)
+                        .lineLimit(1...5)
 
-                HStack(spacing: 8) {
-                    // Generate commit message button
-                    Button {
-                        viewModel.generateCommitMessage(workingDirectory: workingDirectory)
-                    } label: {
-                        if viewModel.isGeneratingMessage {
-                            ProgressView()
-                                .controlSize(.mini)
-                        } else {
-                            Image(systemName: "wand.and.sparkles.inverse")
-                                .font(.system(size: 14))
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .foregroundStyle(.secondary)
-                    .help("Generate commit message")
-                    .disabled(viewModel.modifiedFiles.isEmpty || viewModel.isGeneratingMessage)
-
-                    Spacer()
-
-                    // Push button — slides in when there are commits ahead
-                    if viewModel.commitsAhead > 0 {
+                    HStack(spacing: 8) {
+                        // Generate commit message button
                         Button {
-                            viewModel.push(workingDirectory: workingDirectory)
+                            viewModel.generateCommitMessage(workingDirectory: workingDirectory)
                         } label: {
-                            HStack(spacing: 4) {
-                                if viewModel.isPushing {
-                                    ProgressView()
-                                        .controlSize(.mini)
-                                } else {
-                                    Image(systemName: "arrow.up.to.line")
-                                        .font(.system(size: 12))
-                                }
-                                Text("\(viewModel.commitsAhead)")
-                                    .font(.caption.monospacedDigit())
+                            if viewModel.isGeneratingMessage {
+                                ProgressView()
+                                    .controlSize(.mini)
+                            } else {
+                                Image(systemName: "wand.and.sparkles.inverse")
+                                    .font(.system(size: 14))
                             }
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 4)
-                            .background(Color.accentColor.opacity(0.15))
-                            .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(Color.accentColor)
-                        .help("Push \(viewModel.commitsAhead) commit(s) to remote")
-                        .disabled(viewModel.isPushing)
-                        .transition(.move(edge: .trailing).combined(with: .opacity))
-                    }
+                        .foregroundStyle(.secondary)
+                        .help("Generate commit message")
+                        .disabled(viewModel.modifiedFiles.isEmpty || viewModel.isGeneratingMessage)
 
-                    // Commit (send) button
+                        Spacer()
+
+                        // Commit (send) button
+                        Button {
+                            viewModel.performCommit(workingDirectory: workingDirectory)
+                        } label: {
+                            Image(systemName: "arrow.up.circle.fill")
+                                .font(.system(size: 22))
+                                .foregroundStyle(
+                                    canCommit ? Color.accentColor : Color.secondary
+                                )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(!canCommit)
+                        .help("Commit changes")
+                    }
+                }
+                .padding(12)
+                .background(.bar)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
+
+                // Push button — slides in when there are commits ahead
+                if viewModel.commitsAhead > 0 {
                     Button {
-                        viewModel.performCommit(workingDirectory: workingDirectory)
+                        viewModel.push(workingDirectory: workingDirectory)
                     } label: {
-                        Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 22))
-                            .foregroundStyle(
-                                canCommit ? Color.accentColor : Color.secondary
-                            )
+                        VStack(spacing: 4) {
+                            if viewModel.isPushing {
+                                ProgressView()
+                                    .controlSize(.mini)
+                            } else {
+                                Image(systemName: "arrow.up.to.line")
+                                    .font(.system(size: 12))
+                            }
+                            Text("\(viewModel.commitsAhead)")
+                                .font(.caption.monospacedDigit())
+                        }
+                        .foregroundStyle(.white)
+                        .frame(minWidth: 36)
+                        .frame(maxHeight: .infinity)
+                        .background(Color.accentColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
                     }
                     .buttonStyle(.plain)
-                    .disabled(!canCommit)
-                    .help("Commit changes")
+                    .help("Push \(viewModel.commitsAhead) commit(s) to remote")
+                    .disabled(viewModel.isPushing)
+                    .transition(.move(edge: .trailing).combined(with: .opacity))
                 }
             }
-            .padding(12)
-            .background(.bar)
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .fixedSize(horizontal: false, vertical: true)
         }
         .padding(12)
         .animation(.easeInOut(duration: 0.2), value: viewModel.modifiedFiles.isEmpty)

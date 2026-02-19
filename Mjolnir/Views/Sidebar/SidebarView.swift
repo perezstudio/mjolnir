@@ -38,8 +38,19 @@ struct SidebarView: View {
             }
             .buttonStyle(.plain)
             .help("Add Project")
-            .padding(.trailing, 12)
+
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    appState.isSidebarVisible = false
+                }
+            } label: {
+                Image(systemName: "sidebar.leading")
+                    .foregroundStyle(Color.accentColor)
+            }
+            .buttonStyle(.plain)
+            .help("Hide Sidebar")
         }
+        .padding(.trailing, 12)
         .frame(height: 52) // Match titlebar height
     }
 
