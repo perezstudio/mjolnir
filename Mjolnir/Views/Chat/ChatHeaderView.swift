@@ -14,20 +14,14 @@ struct ChatHeaderView: View {
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
-                // Show sidebar toggle only when sidebar is hidden
-                if !appState.isSidebarVisible {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            appState.isSidebarVisible = true
-                        }
-                    } label: {
-                        Image(systemName: "sidebar.leading")
-                            .foregroundStyle(Color.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Show Sidebar")
-                    .transition(.move(edge: .leading).combined(with: .opacity))
+                Button {
+                    appState.isSidebarVisible.toggle()
+                } label: {
+                    Image(systemName: "sidebar.leading")
+                        .foregroundStyle(appState.isSidebarVisible ? Color.accentColor : Color.secondary)
                 }
+                .buttonStyle(.plain)
+                .help(appState.isSidebarVisible ? "Hide Sidebar" : "Show Sidebar")
 
                 if isEditingTitle {
                     TextField("Chat title", text: $editedTitle)
@@ -56,9 +50,7 @@ struct ChatHeaderView: View {
 
                 // Terminal toggle
                 Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        appState.isTerminalVisible.toggle()
-                    }
+                    appState.isTerminalVisible.toggle()
                 } label: {
                     Image(systemName: "terminal")
                         .foregroundStyle(appState.isTerminalVisible ? Color.accentColor : Color.secondary)
@@ -122,26 +114,18 @@ struct ChatHeaderView: View {
                     .help("Cancel generation")
                 }
 
-                // Show toggle only when inspector is hidden
-                if !appState.isInspectorVisible {
-                    Button {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            appState.isInspectorVisible = true
-                        }
-                    } label: {
-                        Image(systemName: "sidebar.trailing")
-                            .foregroundStyle(Color.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Show Inspector")
-                    .transition(.move(edge: .trailing).combined(with: .opacity))
+                Button {
+                    appState.isInspectorVisible.toggle()
+                } label: {
+                    Image(systemName: "sidebar.trailing")
+                        .foregroundStyle(appState.isInspectorVisible ? Color.accentColor : Color.secondary)
                 }
+                .buttonStyle(.plain)
+                .help(appState.isInspectorVisible ? "Hide Inspector" : "Show Inspector")
             }
-            .padding(.horizontal, 16)
+            .padding(.leading, appState.isSidebarVisible ? 16 : TitleBarMetrics.standard.trafficLightInset)
+            .padding(.trailing, 16)
             .frame(height: 52)
-            .animation(.easeInOut(duration: 0.2), value: appState.isSidebarVisible)
-            .animation(.easeInOut(duration: 0.2), value: appState.isInspectorVisible)
-            .animation(.easeInOut(duration: 0.2), value: appState.isTerminalVisible)
 
             Divider().opacity(0.5)
         }

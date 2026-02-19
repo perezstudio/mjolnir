@@ -2,6 +2,24 @@ import AppKit
 import SwiftUI
 import SwiftTerm
 
+// MARK: - Contained Split View (prevents divider events from propagating to parent NSSplitView)
+
+private class ContainedSplitView: NSSplitView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // Let this split view fully claim hits within its bounds,
+        // preventing the parent NSSplitView from intercepting divider drags.
+        let result = super.hitTest(point)
+        if result != nil, bounds.contains(convert(point, from: superview)) {
+            return result
+        }
+        return result
+    }
+
+    override func mouseDown(with event: NSEvent) {
+        super.mouseDown(with: event)
+    }
+}
+
 // MARK: - Terminal Area Split (sidebar | terminal content)
 
 class TerminalAreaSplitViewController: NSSplitViewController {
@@ -12,11 +30,16 @@ class TerminalAreaSplitViewController: NSSplitViewController {
     private let sidebarVC = NSViewController()
     private let contentVC = TerminalContentViewController()
 
+    override func loadView() {
+        let split = ContainedSplitView()
+        split.isVertical = true
+        split.dividerStyle = .thin
+        self.splitView = split
+        super.loadView()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
-
-        splitView.isVertical = true // side by side
-        splitView.dividerStyle = .thin
 
         guard let terminalManager, let appState else { return }
 

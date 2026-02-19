@@ -40,9 +40,7 @@ struct SidebarView: View {
             .help("Add Project")
 
             Button {
-                withAnimation(.easeInOut(duration: 0.2)) {
-                    appState.isSidebarVisible = false
-                }
+                appState.isSidebarVisible = false
             } label: {
                 Image(systemName: "sidebar.leading")
                     .foregroundStyle(Color.accentColor)
