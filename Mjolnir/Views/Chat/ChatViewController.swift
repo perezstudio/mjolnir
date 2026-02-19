@@ -4,6 +4,8 @@ class ChatViewController: NSViewController {
     override func loadView() {
         let view = NSView()
         view.wantsLayer = true
+        // Solid background for the main content area
+        view.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
 
         let label = NSTextField(labelWithString: "Chat")
         label.translatesAutoresizingMaskIntoConstraints = false

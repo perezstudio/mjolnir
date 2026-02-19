@@ -2,19 +2,22 @@ import AppKit
 
 class InspectorViewController: NSViewController {
     override func loadView() {
-        let view = NSView()
-        view.wantsLayer = true
+        // NSVisualEffectView for the inspector — matches sidebar vibrancy
+        let effectView = NSVisualEffectView()
+        effectView.material = .sidebar
+        effectView.blendingMode = .behindWindow
+        effectView.state = .followsWindowActiveState
 
         let label = NSTextField(labelWithString: "Inspector")
         label.translatesAutoresizingMaskIntoConstraints = false
         label.textColor = .secondaryLabelColor
-        view.addSubview(label)
+        effectView.addSubview(label)
 
         NSLayoutConstraint.activate([
-            label.centerXAnchor.constraint(equalTo: view.centerXAnchor),
-            label.centerYAnchor.constraint(equalTo: view.centerYAnchor),
+            label.centerXAnchor.constraint(equalTo: effectView.centerXAnchor),
+            label.centerYAnchor.constraint(equalTo: effectView.centerYAnchor),
         ])
 
-        self.view = view
+        self.view = effectView
     }
 }

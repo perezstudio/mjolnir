@@ -5,5 +5,7 @@ struct MainWindowView: View {
         WindowRepresentable()
             .ignoresSafeArea()
             .frame(minWidth: 900, minHeight: 600)
+            .toolbar(removing: .title)
+            .toolbarBackgroundVisibility(.hidden, for: .windowToolbar)
     }
 }

@@ -9,7 +9,8 @@ class MainSplitViewController: NSSplitViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        let sidebarItem = NSSplitViewItem(sidebarWithViewController: sidebarVC)
+        // Use plain viewController init for ALL items to avoid system sidebar/inspector styling
+        let sidebarItem = NSSplitViewItem(viewController: sidebarVC)
         sidebarItem.canCollapse = true
         sidebarItem.minimumThickness = 220
         sidebarItem.maximumThickness = 350
@@ -17,7 +18,7 @@ class MainSplitViewController: NSSplitViewController {
         let contentItem = NSSplitViewItem(viewController: chatVC)
         contentItem.minimumThickness = 400
 
-        let inspectorItem = NSSplitViewItem(inspectorWithViewController: inspectorVC)
+        let inspectorItem = NSSplitViewItem(viewController: inspectorVC)
         inspectorItem.canCollapse = true
         inspectorItem.minimumThickness = 250
         inspectorItem.maximumThickness = 400
@@ -26,6 +27,8 @@ class MainSplitViewController: NSSplitViewController {
         addSplitViewItem(sidebarItem)
         addSplitViewItem(contentItem)
         addSplitViewItem(inspectorItem)
+
+        splitView.dividerStyle = .thin
     }
 
     override func viewDidAppear() {
@@ -35,8 +38,21 @@ class MainSplitViewController: NSSplitViewController {
 
     private func configureWindow() {
         guard let window = view.window else { return }
+
+        // Remove the titlebar entirely — content owns the full window
+        window.styleMask.insert(.fullSizeContentView)
         window.titlebarAppearsTransparent = true
         window.titleVisibility = .hidden
-        window.styleMask.insert(.fullSizeContentView)
+
+        // Hide the toolbar so SwiftUI/AppKit don't inject one
+        window.toolbar = nil
+
+        // Hide titlebar traffic-light buttons' background
+        window.standardWindowButton(.closeButton)?.superview?.superview?.isHidden = false
+
+        // Move traffic lights down a bit so they sit nicely in the sidebar header area
+        if let closeButton = window.standardWindowButton(.closeButton) {
+            closeButton.superview?.frame.origin.y = -4
+        }
     }
 }
