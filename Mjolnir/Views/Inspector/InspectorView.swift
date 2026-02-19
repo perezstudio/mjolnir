@@ -61,17 +61,26 @@ struct InspectorView: View {
         }
         .onChange(of: appState.selectedChat?.id) { _, _ in
             viewModel.clearDiff()
+            viewModel.stopWatching()
             viewModel.refresh(workingDirectory: workingDirectory)
+            viewModel.startWatching(workingDirectory: workingDirectory)
+        }
+        .onChange(of: viewModel.diffState.isReady) { _, isReady in
+            if isReady {
+                DiffWindowController.open(
+                    filePath: viewModel.diffState.filePath,
+                    oldContent: viewModel.diffState.oldContent,
+                    newContent: viewModel.diffState.newContent
+                )
+                viewModel.clearDiff()
+            }
         }
         .onAppear {
             viewModel.refresh(workingDirectory: workingDirectory)
+            viewModel.startWatching(workingDirectory: workingDirectory)
         }
-        .sheet(isPresented: $viewModel.showingDiff) {
-            DiffView(
-                filePath: viewModel.selectedFilePath ?? "",
-                diffContent: viewModel.selectedDiff ?? "",
-                onDismiss: { viewModel.clearDiff() }
-            )
+        .onDisappear {
+            viewModel.stopWatching()
         }
         .alert("Discard All Changes?", isPresented: $viewModel.showingDiscardConfirmation) {
             Button("Discard", role: .destructive) {

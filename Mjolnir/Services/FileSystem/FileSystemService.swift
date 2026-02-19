@@ -1,4 +1,5 @@
 import Foundation
+import CoreServices
 
 // MARK: - File Node
 
@@ -18,14 +19,102 @@ struct FileNode: Identifiable, Hashable {
     }
 }
 
+// MARK: - File System Watcher
+
+final class FileSystemWatcher: Sendable {
+    private let stream: FSEventStreamRef
+    private let queue: DispatchQueue
+
+    init(path: String, debounceSeconds: Double, onChange: @escaping @Sendable () -> Void) {
+        let queue = DispatchQueue(label: "com.mjolnir.fswatcher", qos: .utility)
+        self.queue = queue
+
+        let box = CallbackBox(action: onChange, debounce: debounceSeconds)
+        let context = UnsafeMutableRawPointer(Unmanaged.passRetained(box).toOpaque())
+
+        var fsContext = FSEventStreamContext(
+            version: 0,
+            info: context,
+            retain: nil,
+            release: nil,
+            copyDescription: nil
+        )
+
+        self.stream = FSEventStreamCreate(
+            nil,
+            fsEventsCallback,
+            &fsContext,
+            [path] as CFArray,
+            FSEventStreamEventId(kFSEventStreamEventIdSinceNow),
+            0.5,
+            UInt32(kFSEventStreamCreateFlagUseCFTypes | kFSEventStreamCreateFlagFileEvents)
+        )!
+
+        FSEventStreamSetDispatchQueue(stream, queue)
+        FSEventStreamStart(stream)
+    }
+
+    func stop() {
+        FSEventStreamStop(stream)
+        FSEventStreamInvalidate(stream)
+        FSEventStreamRelease(stream)
+    }
+}
+
+private final class CallbackBox: @unchecked Sendable {
+    let action: @Sendable () -> Void
+    let debounce: Double
+    private let debounceQueue = DispatchQueue(label: "com.mjolnir.fswatcher.debounce")
+    private var debounceWork: DispatchWorkItem?
+
+    init(action: @escaping @Sendable () -> Void, debounce: Double) {
+        self.action = action
+        self.debounce = debounce
+    }
+
+    func scheduleAction() {
+        debounceQueue.async { [self] in
+            debounceWork?.cancel()
+            let work = DispatchWorkItem { [self] in action() }
+            debounceWork = work
+            debounceQueue.asyncAfter(deadline: .now() + debounce, execute: work)
+        }
+    }
+}
+
+private func fsEventsCallback(
+    _ streamRef: ConstFSEventStreamRef,
+    _ clientCallBackInfo: UnsafeMutableRawPointer?,
+    _ numEvents: Int,
+    _ eventPaths: UnsafeMutableRawPointer,
+    _ eventFlags: UnsafePointer<FSEventStreamEventFlags>,
+    _ eventIds: UnsafePointer<FSEventStreamEventId>
+) {
+    guard let info = clientCallBackInfo else { return }
+    let box = Unmanaged<CallbackBox>.fromOpaque(info).takeUnretainedValue()
+    box.scheduleAction()
+}
+
 // MARK: - File System Service
 
 actor FileSystemService {
+
+    private var watcher: FileSystemWatcher?
 
     private let ignoredNames: Set<String> = [
         ".git", ".mjolnir", "node_modules", ".build", "DerivedData",
         ".svn", ".hg", "__pycache__", ".DS_Store", ".Trash",
     ]
+
+    func startWatching(path: String, onChange: @escaping @Sendable () -> Void) {
+        stopWatching()
+        watcher = FileSystemWatcher(path: path, debounceSeconds: 0.5, onChange: onChange)
+    }
+
+    func stopWatching() {
+        watcher?.stop()
+        watcher = nil
+    }
 
     func buildFileTree(at path: String, maxDepth: Int = 5) throws -> FileNode {
         let url = URL(fileURLWithPath: path)

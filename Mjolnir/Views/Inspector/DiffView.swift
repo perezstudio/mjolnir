@@ -1,77 +1,247 @@
 import SwiftUI
+import AppKit
 
-struct DiffView: View {
-    let filePath: String
-    let diffContent: String
-    let onDismiss: () -> Void
+// MARK: - Diff Window Opener
 
-    var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Image(systemName: "doc.text")
-                    .foregroundStyle(.secondary)
-                Text(filePath)
-                    .font(.headline)
-                    .lineLimit(1)
-                    .truncationMode(.head)
-                Spacer()
-                Button("Done") { onDismiss() }
-                    .keyboardShortcut(.cancelAction)
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 12)
+final class DiffWindowController: NSWindowController, NSWindowDelegate {
+    private static var openWindows: [DiffWindowController] = []
 
-            Divider()
+    static func open(filePath: String, oldContent: String, newContent: String) {
+        let diffView = DiffView(
+            filePath: filePath,
+            oldContent: oldContent,
+            newContent: newContent
+        )
 
-            ScrollView([.horizontal, .vertical]) {
-                VStack(alignment: .leading, spacing: 0) {
-                    let lines = diffContent.components(separatedBy: "\n")
-                    ForEach(Array(lines.enumerated()), id: \.offset) { index, line in
-                        DiffLineView(line: line, lineNumber: index + 1)
-                    }
-                }
-                .padding(12)
-            }
-            .background(Color(nsColor: .textBackgroundColor))
-        }
-        .frame(minWidth: 500, minHeight: 400)
-        .frame(idealWidth: 700, idealHeight: 500)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 900, height: 600),
+            styleMask: [.titled, .closable, .resizable, .miniaturizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = (filePath as NSString).lastPathComponent
+        window.subtitle = filePath
+        window.contentView = NSHostingView(rootView: diffView)
+        window.center()
+        window.isReleasedWhenClosed = false
+
+        let controller = DiffWindowController(window: window)
+        window.delegate = controller
+        openWindows.append(controller)
+        controller.showWindow(nil)
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        DiffWindowController.openWindows.removeAll { $0 === self }
     }
 }
 
-struct DiffLineView: View {
-    let line: String
-    let lineNumber: Int
+// MARK: - Side-by-Side Diff View
+
+struct DiffView: View {
+    let filePath: String
+    let oldContent: String
+    let newContent: String
+
+    @State private var scrollOffset: CGFloat = 0
+
+    private var diffResult: DiffResult {
+        computeDiff(old: oldContent, new: newContent)
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            // Header
+            HStack(spacing: 0) {
+                Text("HEAD")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color.red.opacity(0.05))
+
+                Divider().frame(height: 30)
+
+                Text("Working Copy")
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 8)
+                    .background(Color.green.opacity(0.05))
+            }
+
+            Divider()
+
+            // Side-by-side content
+            GeometryReader { geometry in
+                let halfWidth = geometry.size.width / 2
+
+                ScrollView([.vertical]) {
+                    HStack(alignment: .top, spacing: 0) {
+                        // Left pane: old content
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(diffResult.lines.enumerated()), id: \.offset) { _, line in
+                                DiffLinePaneView(
+                                    lineNumber: line.oldLineNumber,
+                                    text: line.oldText,
+                                    type: line.type,
+                                    side: .old
+                                )
+                            }
+                        }
+                        .frame(width: halfWidth)
+
+                        Divider()
+
+                        // Right pane: new content
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(Array(diffResult.lines.enumerated()), id: \.offset) { _, line in
+                                DiffLinePaneView(
+                                    lineNumber: line.newLineNumber,
+                                    text: line.newText,
+                                    type: line.type,
+                                    side: .new
+                                )
+                            }
+                        }
+                        .frame(width: halfWidth)
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        }
+        .background(Color(nsColor: .textBackgroundColor))
+        .frame(minWidth: 600, minHeight: 400)
+    }
+}
+
+// MARK: - Diff Line Pane View
+
+enum DiffSide {
+    case old, new
+}
+
+struct DiffLinePaneView: View {
+    let lineNumber: Int?
+    let text: String?
+    let type: DiffLineType
+    let side: DiffSide
 
     var body: some View {
         HStack(spacing: 0) {
-            Text("\(lineNumber)")
+            // Line number
+            Text(lineNumber.map { "\($0)" } ?? "")
                 .font(.system(size: 11, design: .monospaced))
                 .foregroundStyle(.tertiary)
                 .frame(width: 40, alignment: .trailing)
                 .padding(.trailing, 8)
 
-            Text(line)
+            // Content
+            Text(text ?? "")
                 .font(.system(size: 12, design: .monospaced))
-                .foregroundStyle(lineColor)
+                .foregroundStyle(text != nil ? Color.primary : Color.clear)
                 .textSelection(.enabled)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 1)
-        .background(lineBackground)
+        .padding(.trailing, 4)
+        .background(backgroundColor)
     }
 
-    private var lineColor: Color {
-        if line.hasPrefix("+") && !line.hasPrefix("+++") { return .green }
-        if line.hasPrefix("-") && !line.hasPrefix("---") { return .red }
-        if line.hasPrefix("@@") { return .cyan }
-        return .primary
+    private var backgroundColor: Color {
+        switch type {
+        case .unchanged, .separator:
+            return .clear
+        case .added:
+            return side == .new ? Color.green.opacity(0.12) : .clear
+        case .removed:
+            return side == .old ? Color.red.opacity(0.12) : .clear
+        case .modified:
+            return side == .old ? Color.red.opacity(0.08) : Color.green.opacity(0.08)
+        }
+    }
+}
+
+// MARK: - Diff Computation
+
+enum DiffLineType {
+    case unchanged
+    case added
+    case removed
+    case modified
+    case separator
+}
+
+struct DiffLine {
+    let oldLineNumber: Int?
+    let newLineNumber: Int?
+    let oldText: String?
+    let newText: String?
+    let type: DiffLineType
+}
+
+struct DiffResult {
+    let lines: [DiffLine]
+}
+
+private func computeDiff(old: String, new: String) -> DiffResult {
+    let oldLines = old.isEmpty ? [] : old.components(separatedBy: "\n")
+    let newLines = new.isEmpty ? [] : new.components(separatedBy: "\n")
+
+    // Use LCS-based diff
+    let table = lcsTable(oldLines, newLines)
+    var result: [DiffLine] = []
+    buildDiff(table: table, oldLines: oldLines, newLines: newLines,
+              i: oldLines.count, j: newLines.count, result: &result)
+
+    return DiffResult(lines: result)
+}
+
+private func lcsTable(_ old: [String], _ new: [String]) -> [[Int]] {
+    let m = old.count
+    let n = new.count
+    var table = Array(repeating: Array(repeating: 0, count: n + 1), count: m + 1)
+
+    for i in 1...max(m, 1) {
+        guard i <= m else { break }
+        for j in 1...max(n, 1) {
+            guard j <= n else { break }
+            if old[i - 1] == new[j - 1] {
+                table[i][j] = table[i - 1][j - 1] + 1
+            } else {
+                table[i][j] = max(table[i - 1][j], table[i][j - 1])
+            }
+        }
     }
 
-    private var lineBackground: Color {
-        if line.hasPrefix("+") && !line.hasPrefix("+++") { return Color.green.opacity(0.1) }
-        if line.hasPrefix("-") && !line.hasPrefix("---") { return Color.red.opacity(0.1) }
-        if line.hasPrefix("@@") { return Color.cyan.opacity(0.05) }
-        return .clear
+    return table
+}
+
+private func buildDiff(table: [[Int]], oldLines: [String], newLines: [String],
+                        i: Int, j: Int, result: inout [DiffLine]) {
+    if i > 0 && j > 0 && oldLines[i - 1] == newLines[j - 1] {
+        buildDiff(table: table, oldLines: oldLines, newLines: newLines,
+                  i: i - 1, j: j - 1, result: &result)
+        result.append(DiffLine(
+            oldLineNumber: i, newLineNumber: j,
+            oldText: oldLines[i - 1], newText: newLines[j - 1],
+            type: .unchanged
+        ))
+    } else if j > 0 && (i == 0 || table[i][j - 1] >= table[i - 1][j]) {
+        buildDiff(table: table, oldLines: oldLines, newLines: newLines,
+                  i: i, j: j - 1, result: &result)
+        result.append(DiffLine(
+            oldLineNumber: nil, newLineNumber: j,
+            oldText: nil, newText: newLines[j - 1],
+            type: .added
+        ))
+    } else if i > 0 && (j == 0 || table[i][j - 1] < table[i - 1][j]) {
+        buildDiff(table: table, oldLines: oldLines, newLines: newLines,
+                  i: i - 1, j: j, result: &result)
+        result.append(DiffLine(
+            oldLineNumber: i, newLineNumber: nil,
+            oldText: oldLines[i - 1], newText: nil,
+            type: .removed
+        ))
     }
 }

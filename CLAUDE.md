@@ -149,14 +149,14 @@ Mjolnir/
 
 ### Phase 6: Inspector — File Tree and Git Integration
 
-- [ ] Create `Services/Git/GitService.swift` — `actor`: currentBranch(), status() → [GitFileStatus], diff(), commit(), discardChanges(), all scoped to a working directory path
-- [ ] Create `Services/FileSystem/FileSystemService.swift` — `actor`: buildFileTree(), startWatching() (FSEvents), stopWatching()
-- [ ] Create `ViewModels/InspectorViewModel.swift` — `@Observable`: fileTree, modifiedFiles, selectedTab (.files/.modified), refresh(), commitFiles(), discardFiles() — operates on chat.workingDirectory
-- [ ] Create `Views/Inspector/InspectorView.swift` — SwiftUI segmented Picker switching Files/Modified tabs, inline commit/discard UI
-- [ ] Create `Views/Inspector/FileTreeView.swift` — SwiftUI recursive file tree with expand/collapse, file-type icons
-- [ ] Create `Views/Inspector/ModifiedFilesView.swift` — SwiftUI list with colored A/M/D status labels, file name + directory path, tap to view diff
-- [ ] Create `Views/Inspector/DiffViewController.swift` — new window, side-by-side (old vs current), highlighted additions/deletions, synchronized scrolling, line numbers
-- [ ] Verify: file tree shows directory, modified tab shows git status (scoped to worktree for worktree chats), diff view works, commit creates git commit, discard reverts files, tree refreshes on changes
+- [x] Create `Services/Git/GitService.swift` — `actor`: currentBranch(), status(), diff(), fileContent(), workingCopyContent(), commit(), discardChanges(), push(), commitsAhead(), generateDiffSummary()
+- [x] Create `Services/FileSystem/FileSystemService.swift` — `actor`: buildFileTree(), startWatching() (FSEvents with debounce), stopWatching()
+- [x] Create `ViewModels/InspectorViewModel.swift` — `@Observable`: fileTree, modifiedFiles, selectedTab, refresh(), commitFiles(), discardFiles(), generateCommitMessage(), push(), file watching lifecycle
+- [x] Create `Views/Inspector/InspectorView.swift` — SwiftUI segmented Picker switching Files/Modified tabs, inline commit/discard UI, auto-refresh via FSEvents
+- [x] Create `Views/Inspector/FileTreeView.swift` — SwiftUI recursive file tree with expand/collapse, file-type icons
+- [x] Create `Views/Inspector/ModifiedFilesView.swift` — SwiftUI list with colored A/M/D status labels, file name + directory path, tap to view diff
+- [x] Create `Views/Inspector/DiffView.swift` — side-by-side diff in new NSWindow, LCS-based diff, line numbers, color-highlighted additions/deletions
+- [x] Verify: file tree shows directory, modified tab shows git status, diff view works, commit creates git commit, discard reverts files, tree auto-refreshes on changes
 
 ---
 

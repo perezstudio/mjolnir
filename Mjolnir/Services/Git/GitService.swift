@@ -112,6 +112,15 @@ actor GitService {
         return "Diff stat:\n\(diffStat)\n\nDiff:\n\(diffContent)"
     }
 
+    func fileContent(path: String, revision: String, at workingDirectory: String) throws -> String {
+        try runGit(args: ["show", "\(revision):\(path)"], at: workingDirectory)
+    }
+
+    func workingCopyContent(path: String, at workingDirectory: String) throws -> String {
+        let fullPath = (workingDirectory as NSString).appendingPathComponent(path)
+        return try String(contentsOfFile: fullPath, encoding: .utf8)
+    }
+
     func discardChanges(files: [String], at workingDirectory: String) throws {
         let allStatus = try status(at: workingDirectory)
         let untrackedPaths = Set(allStatus.filter { $0.workTreeStatus == "?" }.map(\.path))

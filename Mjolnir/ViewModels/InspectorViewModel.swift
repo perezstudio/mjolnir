@@ -17,12 +17,7 @@ final class InspectorViewModel {
     var errorMessage: String?
 
     // Diff
-    var selectedFilePath: String?
-    var selectedDiff: String?
-    var showingDiff: Bool {
-        get { selectedDiff != nil }
-        set { if !newValue { clearDiff() } }
-    }
+    var diffState = DiffState()
 
     // Commit
     var commitMessage: String = ""
@@ -38,6 +33,31 @@ final class InspectorViewModel {
     private let gitService = GitService()
     private let fileSystemService = FileSystemService()
     private let cliService = ClaudeCLIService()
+    private var watchingDirectory: String?
+
+    // MARK: - File Watching
+
+    func startWatching(workingDirectory: String) {
+        guard !workingDirectory.isEmpty, watchingDirectory != workingDirectory else { return }
+        stopWatching()
+        watchingDirectory = workingDirectory
+
+        Task {
+            await fileSystemService.startWatching(path: workingDirectory) { [weak self] in
+                Task { @MainActor in
+                    self?.refresh(workingDirectory: workingDirectory)
+                }
+            }
+        }
+    }
+
+    func stopWatching() {
+        guard watchingDirectory != nil else { return }
+        watchingDirectory = nil
+        Task {
+            await fileSystemService.stopWatching()
+        }
+    }
 
     // MARK: - Refresh
 
@@ -69,26 +89,44 @@ final class InspectorViewModel {
     // MARK: - Diff
 
     func loadDiff(for file: GitFileStatus, workingDirectory: String) {
-        selectedFilePath = file.path
         Task {
             do {
-                let diffText = try await gitService.diff(
-                    file: file.path,
-                    staged: file.isStaged,
-                    at: workingDirectory
-                )
-                self.selectedDiff = diffText.isEmpty
-                    ? "(No diff available -- file may be untracked)"
-                    : diffText
+                let oldContent: String
+                if file.displayStatus == .untracked {
+                    oldContent = ""
+                } else {
+                    oldContent = (try? await gitService.fileContent(
+                        path: file.path,
+                        revision: "HEAD",
+                        at: workingDirectory
+                    )) ?? ""
+                }
+
+                let newContent: String
+                if file.displayStatus == .deleted {
+                    newContent = ""
+                } else {
+                    newContent = (try? await gitService.workingCopyContent(
+                        path: file.path,
+                        at: workingDirectory
+                    )) ?? ""
+                }
+
+                self.diffState.filePath = file.path
+                self.diffState.oldContent = oldContent
+                self.diffState.newContent = newContent
+                self.diffState.isReady = true
             } catch {
-                self.selectedDiff = "Error loading diff: \(error.localizedDescription)"
+                self.errorMessage = "Failed to load diff: \(error.localizedDescription)"
             }
         }
     }
 
     func clearDiff() {
-        selectedFilePath = nil
-        selectedDiff = nil
+        diffState.isReady = false
+        diffState.filePath = ""
+        diffState.oldContent = ""
+        diffState.newContent = ""
     }
 
     // MARK: - Commit
@@ -196,4 +234,14 @@ final class InspectorViewModel {
             }
         }
     }
+}
+
+// MARK: - Diff State (shared between InspectorView and DiffView window)
+
+@Observable
+final class DiffState {
+    var filePath: String = ""
+    var oldContent: String = ""
+    var newContent: String = ""
+    var isReady: Bool = false
 }
