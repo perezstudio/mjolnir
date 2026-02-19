@@ -167,16 +167,12 @@ struct InspectorView: View {
                         Button {
                             viewModel.generateCommitMessage(workingDirectory: workingDirectory)
                         } label: {
-                            if viewModel.isGeneratingMessage {
-                                ProgressView()
-                                    .controlSize(.mini)
-                            } else {
-                                Image(systemName: "wand.and.sparkles.inverse")
-                                    .font(.system(size: 14))
-                            }
+                            Image(systemName: "wand.and.sparkles.inverse")
+                                .font(.system(size: 14))
+                                .symbolRenderingMode(.multicolor)
+                                .symbolEffect(.pulse, isActive: viewModel.isGeneratingMessage)
                         }
                         .buttonStyle(.plain)
-                        .foregroundStyle(.secondary)
                         .help("Generate commit message")
                         .disabled(viewModel.modifiedFiles.isEmpty || viewModel.isGeneratingMessage)
 
@@ -211,7 +207,7 @@ struct InspectorView: View {
                                 ProgressView()
                                     .controlSize(.mini)
                             } else {
-                                Image(systemName: "arrow.up.to.line")
+                                Image(systemName: "icloud.and.arrow.up")
                                     .font(.system(size: 12))
                             }
                             Text("\(viewModel.commitsAhead)")
