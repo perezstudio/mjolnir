@@ -7,4 +7,5 @@ final class AppState {
     var selectedChat: Chat?
     var isSidebarVisible: Bool = true
     var isInspectorVisible: Bool = false
+    var isTerminalVisible: Bool = false
 }

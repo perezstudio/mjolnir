@@ -5,6 +5,8 @@ struct ChatHeaderView: View {
     @Bindable var appState: AppState
     let isProcessing: Bool
     let onCancel: () -> Void
+    var onRunCommand: (() -> Void)?
+    var onConfigureRunCommand: (() -> Void)?
 
     @State private var isEditingTitle = false
     @State private var editedTitle = ""
@@ -51,6 +53,62 @@ struct ChatHeaderView: View {
 
             Spacer()
 
+            // Terminal toggle
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    appState.isTerminalVisible.toggle()
+                }
+            } label: {
+                Image(systemName: "terminal")
+                    .foregroundStyle(appState.isTerminalVisible ? Color.accentColor : Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .help(appState.isTerminalVisible ? "Hide Terminal" : "Show Terminal")
+
+            // Run button
+            Button {
+                onRunCommand?()
+            } label: {
+                Image(systemName: "play.fill")
+                    .foregroundStyle(Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Run Command")
+
+            // Run settings
+            Button {
+                onConfigureRunCommand?()
+            } label: {
+                Image(systemName: "gearshape")
+                    .foregroundStyle(Color.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("Configure Run Command")
+
+            // Open in... menu (native SwiftUI Menu)
+            Menu {
+                Button {
+                    IDEDetector.revealInFinder(path: chat.workingDirectory)
+                } label: {
+                    Label("Reveal in Finder", systemImage: "folder")
+                }
+
+                Divider()
+
+                let apps = IDEDetector.detectInstalled()
+                ForEach(apps, id: \.bundleID) { app in
+                    Button("Open in \(app.name)") {
+                        IDEDetector.open(bundleID: app.bundleID, path: chat.workingDirectory)
+                    }
+                }
+            } label: {
+                Image(systemName: "folder")
+                    .foregroundStyle(Color.secondary)
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .help("Open In...")
+
             if isProcessing {
                 ProgressView()
                     .controlSize(.small)
@@ -82,6 +140,7 @@ struct ChatHeaderView: View {
         .frame(height: 52)
         .animation(.easeInOut(duration: 0.2), value: appState.isSidebarVisible)
         .animation(.easeInOut(duration: 0.2), value: appState.isInspectorVisible)
+        .animation(.easeInOut(duration: 0.2), value: appState.isTerminalVisible)
     }
 }
 
