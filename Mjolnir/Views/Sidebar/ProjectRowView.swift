@@ -24,6 +24,16 @@ struct ProjectRowView: View {
                 .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .monospacedDigit()
+
+            Button {
+                onNewChat()
+            } label: {
+                Image(systemName: "plus")
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(.plain)
+            .help("New Chat")
         }
         .contextMenu {
             Button("New Chat") { onNewChat() }

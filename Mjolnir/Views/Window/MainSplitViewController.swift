@@ -10,12 +10,14 @@ class MainSplitViewController: NSSplitViewController {
     var modelContainer: ModelContainer? {
         didSet {
             sidebarVC.modelContainer = modelContainer
+            chatVC.modelContainer = modelContainer
         }
     }
 
     var appState: AppState? {
         didSet {
             sidebarVC.appState = appState
+            chatVC.appState = appState
         }
     }
 
