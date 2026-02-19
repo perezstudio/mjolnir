@@ -169,7 +169,7 @@ struct InspectorView: View {
                         } label: {
                             Image(systemName: "wand.and.sparkles.inverse")
                                 .font(.system(size: 14))
-                                .symbolRenderingMode(.multicolor)
+                                .foregroundStyle(Color.accentColor)
                                 .symbolEffect(.pulse, isActive: viewModel.isGeneratingMessage)
                         }
                         .buttonStyle(.plain)
