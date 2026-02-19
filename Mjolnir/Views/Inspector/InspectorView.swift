@@ -169,7 +169,7 @@ struct InspectorView: View {
                             viewModel.generateCommitMessage(workingDirectory: workingDirectory)
                         } label: {
                             Image(systemName: "wand.and.sparkles.inverse")
-                                .font(.system(size: 12))
+                                .font(.system(size: 14, weight: .bold))
                                 .foregroundStyle(Color.accentColor)
                                 .symbolEffect(.pulse, isActive: viewModel.isGeneratingMessage)
                         }
@@ -184,7 +184,7 @@ struct InspectorView: View {
                             viewModel.performCommit(workingDirectory: workingDirectory)
                         } label: {
                             Image(systemName: "arrow.up.circle.fill")
-                                .font(.system(size: 18))
+                                .font(.system(size: 22))
                                 .foregroundStyle(
                                     canCommit ? Color.accentColor : Color.secondary
                                 )
