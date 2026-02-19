@@ -7,14 +7,8 @@ class SidebarViewController: NSViewController {
     var modelContainer: ModelContainer?
     var appState: AppState?
 
-    private var hostingView: NSHostingView<AnyView>?
-
     override func loadView() {
-        let effectView = NSVisualEffectView()
-        effectView.material = .sidebar
-        effectView.blendingMode = .behindWindow
-        effectView.state = .followsWindowActiveState
-        self.view = effectView
+        self.view = NSView()
     }
 
     override func viewDidLoad() {
@@ -30,11 +24,11 @@ class SidebarViewController: NSViewController {
             self?.presentFolderPicker()
         }
 
-        let hostedView = sidebarView
+        let hosting = NSHostingView(rootView: sidebarView
+            .background(.ultraThinMaterial)
             .ignoresSafeArea()
             .modelContainer(modelContainer)
-
-        let hosting = NSHostingView(rootView: AnyView(hostedView))
+        )
         hosting.translatesAutoresizingMaskIntoConstraints = false
 
         view.addSubview(hosting)
@@ -44,8 +38,6 @@ class SidebarViewController: NSViewController {
             hosting.trailingAnchor.constraint(equalTo: view.trailingAnchor),
             hosting.bottomAnchor.constraint(equalTo: view.bottomAnchor),
         ])
-
-        self.hostingView = hosting
     }
 
     // MARK: - Folder Picker

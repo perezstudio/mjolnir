@@ -48,11 +48,10 @@ class ChatViewController: NSSplitViewController {
     }
 
     private func setupChatContent(modelContainer: ModelContainer, appState: AppState) {
-        let chatView = ChatView(appState: appState, terminalManager: terminalManager)
+        let hosting = NSHostingView(rootView: ChatView(appState: appState, terminalManager: terminalManager)
             .ignoresSafeArea()
             .modelContainer(modelContainer)
-
-        let hosting = NSHostingView(rootView: AnyView(chatView))
+        )
         hosting.translatesAutoresizingMaskIntoConstraints = false
 
         let container = NSView()

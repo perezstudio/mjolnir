@@ -58,8 +58,7 @@ class TerminalAreaSplitViewController: NSSplitViewController {
     }
 
     private func setupSidebar(terminalManager: TerminalManager, appState: AppState) {
-        let listView = TerminalSessionListView(manager: terminalManager, appState: appState)
-        let hosting = NSHostingView(rootView: AnyView(listView))
+        let hosting = NSHostingView(rootView: TerminalSessionListView(manager: terminalManager, appState: appState))
         hosting.translatesAutoresizingMaskIntoConstraints = false
 
         let container = NSView()

@@ -1,5 +1,4 @@
 import SwiftUI
-import Combine
 
 struct MessageBubbleView: View {
     let message: Message
@@ -96,9 +95,7 @@ struct StreamingMessageView: View {
 // MARK: - Typing Indicator
 
 struct TypingIndicatorView: View {
-    @State private var phase: Int = 0
-
-    private let timer = Timer.publish(every: 0.4, on: .main, in: .common).autoconnect()
+    @State private var animating = false
 
     var body: some View {
         HStack(spacing: 4) {
@@ -106,11 +103,15 @@ struct TypingIndicatorView: View {
                 Circle()
                     .fill(Color.secondary)
                     .frame(width: 6, height: 6)
-                    .opacity(index == phase ? 1.0 : 0.3)
+                    .opacity(animating ? 1.0 : 0.3)
+                    .animation(
+                        .easeInOut(duration: 0.4)
+                            .repeatForever(autoreverses: true)
+                            .delay(Double(index) * 0.15),
+                        value: animating
+                    )
             }
         }
-        .onReceive(timer) { _ in
-            phase = (phase + 1) % 3
-        }
+        .onAppear { animating = true }
     }
 }
