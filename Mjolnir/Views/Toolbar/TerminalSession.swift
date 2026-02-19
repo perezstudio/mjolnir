@@ -52,7 +52,6 @@ class TerminalManager {
     var sessions: [TerminalSession] = []
     var activeSessionID: UUID?
     var theme: TerminalTheme = .dark
-    var sidebarWidth: CGFloat = 140
 
     var activeSession: TerminalSession? {
         sessions.first { $0.id == activeSessionID }

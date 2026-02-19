@@ -1,42 +1,199 @@
+import AppKit
 import SwiftUI
+import SwiftTerm
 
-struct TerminalAreaView: View {
-    @Bindable var manager: TerminalManager
-    let workingDirectory: String
+// MARK: - Terminal Area Split (sidebar | terminal content)
 
-    var body: some View {
-        HStack(spacing: 0) {
-            // Left: terminal session list
-            sessionList
-                .frame(width: manager.sidebarWidth)
-                .background(Color(nsColor: .controlBackgroundColor))
+class TerminalAreaSplitViewController: NSSplitViewController {
 
-            // Horizontal resize handle
-            ResizeHandle(axis: .horizontal)
-                .gesture(
-                    DragGesture(minimumDistance: 1)
-                        .onChanged { value in
-                            let newWidth = manager.sidebarWidth + value.translation.width
-                            manager.sidebarWidth = max(80, min(300, newWidth))
-                        }
-                )
+    var terminalManager: TerminalManager?
+    var appState: AppState?
 
-            // Right: active terminal
-            if !manager.sessions.isEmpty {
-                MultiTerminalView(
-                    sessions: manager.sessions,
-                    activeSessionID: manager.activeSessionID,
-                    theme: manager.theme
-                )
-            } else {
-                emptyState
+    private let sidebarVC = NSViewController()
+    private let contentVC = TerminalContentViewController()
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        splitView.isVertical = true // side by side
+        splitView.dividerStyle = .thin
+
+        guard let terminalManager, let appState else { return }
+
+        // Left: session list
+        setupSidebar(terminalManager: terminalManager, appState: appState)
+        let sidebarItem = NSSplitViewItem(viewController: sidebarVC)
+        sidebarItem.minimumThickness = 80
+        sidebarItem.maximumThickness = 300
+        addSplitViewItem(sidebarItem)
+
+        // Right: terminal content
+        contentVC.terminalManager = terminalManager
+        let contentItem = NSSplitViewItem(viewController: contentVC)
+        contentItem.minimumThickness = 200
+        addSplitViewItem(contentItem)
+    }
+
+    private func setupSidebar(terminalManager: TerminalManager, appState: AppState) {
+        let listView = TerminalSessionListView(manager: terminalManager, appState: appState)
+        let hosting = NSHostingView(rootView: AnyView(listView))
+        hosting.translatesAutoresizingMaskIntoConstraints = false
+
+        let container = NSView()
+        container.addSubview(hosting)
+        NSLayoutConstraint.activate([
+            hosting.topAnchor.constraint(equalTo: container.topAnchor),
+            hosting.leadingAnchor.constraint(equalTo: container.leadingAnchor),
+            hosting.trailingAnchor.constraint(equalTo: container.trailingAnchor),
+            hosting.bottomAnchor.constraint(equalTo: container.bottomAnchor),
+        ])
+
+        sidebarVC.view = container
+    }
+}
+
+// MARK: - Terminal Content (manages LocalProcessTerminalView instances)
+
+class TerminalContentViewController: NSViewController, LocalProcessTerminalViewDelegate {
+
+    var terminalManager: TerminalManager?
+
+    private var terminals: [UUID: LocalProcessTerminalView] = [:]
+    private var viewToSession: [ObjectIdentifier: UUID] = [:]
+    private var currentTheme: TerminalTheme?
+    private var observationTask: Task<Void, Never>?
+
+    override func loadView() {
+        let v = NSView()
+        v.wantsLayer = true
+        v.autoresizesSubviews = true
+        self.view = v
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        startObserving()
+    }
+
+    private func startObserving() {
+        observationTask?.cancel()
+        observationTask = Task { @MainActor [weak self] in
+            while !Task.isCancelled {
+                guard let self, let manager = self.terminalManager else { return }
+
+                self.syncTerminals(manager: manager)
+
+                await withCheckedContinuation { continuation in
+                    withObservationTracking {
+                        _ = manager.sessions
+                        _ = manager.sessions.map(\.pendingCommand)
+                        _ = manager.activeSessionID
+                        _ = manager.theme
+                    } onChange: {
+                        continuation.resume()
+                    }
+                }
             }
         }
     }
 
-    // MARK: - Session List
+    private func syncTerminals(manager: TerminalManager) {
+        let sessions = manager.sessions
+        let activeID = manager.activeSessionID
+        let theme = manager.theme
 
-    private var sessionList: some View {
+        // Add new sessions
+        for session in sessions {
+            if terminals[session.id] == nil {
+                let termView = LocalProcessTerminalView(frame: view.bounds)
+                termView.processDelegate = self
+                termView.autoresizingMask = [.width, .height]
+                applyTheme(theme, to: termView)
+                view.addSubview(termView)
+                terminals[session.id] = termView
+                viewToSession[ObjectIdentifier(termView)] = session.id
+
+                let shell = ProcessInfo.processInfo.environment["SHELL"] ?? "/bin/zsh"
+                let shellName = "-" + (shell as NSString).lastPathComponent
+                let dir = session.workingDirectory.isEmpty ? nil : session.workingDirectory
+                termView.startProcess(executable: shell, execName: shellName, currentDirectory: dir)
+
+                if let command = session.pendingCommand {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        let bytes = Array((command + "\n").utf8)
+                        termView.send(source: termView, data: bytes[...])
+                        session.pendingCommand = nil
+                    }
+                }
+            } else if let command = session.pendingCommand,
+                      let termView = terminals[session.id] {
+                let bytes = Array((command + "\n").utf8)
+                termView.send(source: termView, data: bytes[...])
+                session.pendingCommand = nil
+            }
+        }
+
+        // Remove deleted sessions
+        let currentIDs = Set(sessions.map(\.id))
+        for (id, termView) in terminals where !currentIDs.contains(id) {
+            termView.terminate()
+            termView.removeFromSuperview()
+            viewToSession.removeValue(forKey: ObjectIdentifier(termView))
+            terminals.removeValue(forKey: id)
+        }
+
+        // Show only active, update frames
+        for (id, termView) in terminals {
+            let isActive = id == activeID
+            termView.isHidden = !isActive
+            if isActive {
+                termView.frame = view.bounds
+            }
+        }
+
+        // Apply theme if changed
+        if currentTheme != theme {
+            currentTheme = theme
+            for (_, termView) in terminals {
+                applyTheme(theme, to: termView)
+            }
+        }
+    }
+
+    private func applyTheme(_ theme: TerminalTheme, to termView: LocalProcessTerminalView) {
+        termView.nativeBackgroundColor = theme.backgroundColor
+        termView.nativeForegroundColor = theme.foregroundColor
+        termView.caretColor = theme.caretColor
+        termView.needsDisplay = true
+    }
+
+    // MARK: - LocalProcessTerminalViewDelegate
+
+    func sizeChanged(source: LocalProcessTerminalView, newCols: Int, newRows: Int) {}
+
+    func setTerminalTitle(source: LocalProcessTerminalView, title: String) {
+        let viewID = ObjectIdentifier(source)
+        guard let sessionID = viewToSession[viewID],
+              let session = terminalManager?.sessions.first(where: { $0.id == sessionID }) else { return }
+        session.title = title
+    }
+
+    func hostCurrentDirectoryUpdate(source: TerminalView, directory: String?) {}
+
+    func processTerminated(source: TerminalView, exitCode: Int32?) {}
+}
+
+// MARK: - Terminal Session List (SwiftUI)
+
+struct TerminalSessionListView: View {
+    @Bindable var manager: TerminalManager
+    @Bindable var appState: AppState
+
+    private var workingDirectory: String {
+        appState.selectedChat?.workingDirectory ?? ""
+    }
+
+    var body: some View {
         VStack(spacing: 0) {
             HStack {
                 Text("Terminals")
@@ -83,21 +240,7 @@ struct TerminalAreaView: View {
                 .padding(4)
             }
         }
-    }
-
-    // MARK: - Empty State
-
-    private var emptyState: some View {
-        VStack(spacing: 8) {
-            Text("No terminals open")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-            Button("New Terminal") {
-                manager.addSession(workingDirectory: workingDirectory)
-            }
-            .controlSize(.small)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color(nsColor: .controlBackgroundColor))
     }
 }
 
@@ -135,48 +278,5 @@ struct TerminalSessionRow: View {
         .contentShape(Rectangle())
         .onTapGesture { onSelect() }
         .onHover { isHovered = $0 }
-    }
-}
-
-// MARK: - Resize Handle
-
-struct ResizeHandle: View {
-    enum Axis { case horizontal, vertical }
-    let axis: Axis
-
-    @State private var isHovered = false
-
-    var body: some View {
-        Group {
-            switch axis {
-            case .horizontal:
-                Rectangle()
-                    .fill(isHovered ? Color.accentColor.opacity(0.5) : Color(nsColor: .separatorColor))
-                    .frame(width: 4)
-                    .frame(maxHeight: .infinity)
-                    .onHover { hovering in
-                        isHovered = hovering
-                        if hovering {
-                            NSCursor.resizeLeftRight.push()
-                        } else {
-                            NSCursor.pop()
-                        }
-                    }
-            case .vertical:
-                Rectangle()
-                    .fill(isHovered ? Color.accentColor.opacity(0.5) : Color(nsColor: .separatorColor))
-                    .frame(height: 4)
-                    .frame(maxWidth: .infinity)
-                    .onHover { hovering in
-                        isHovered = hovering
-                        if hovering {
-                            NSCursor.resizeUpDown.push()
-                        } else {
-                            NSCursor.pop()
-                        }
-                    }
-            }
-        }
-        .contentShape(Rectangle())
     }
 }
