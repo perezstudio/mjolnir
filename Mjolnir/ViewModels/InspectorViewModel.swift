@@ -63,7 +63,10 @@ final class InspectorViewModel {
 
     func refresh(workingDirectory: String) {
         guard !workingDirectory.isEmpty else { return }
-        isLoading = true
+        let isInitialLoad = fileTree == nil
+        if isInitialLoad {
+            isLoading = true
+        }
         errorMessage = nil
 
         Task {
@@ -77,7 +80,10 @@ final class InspectorViewModel {
                 let ahead = try await aheadResult
 
                 self.fileTree = tree
-                self.modifiedFiles = status
+                if status.map(\.path) != modifiedFiles.map(\.path)
+                    || status.map(\.displayStatus) != modifiedFiles.map(\.displayStatus) {
+                    self.modifiedFiles = status
+                }
                 self.commitsAhead = ahead
             } catch {
                 self.errorMessage = error.localizedDescription
