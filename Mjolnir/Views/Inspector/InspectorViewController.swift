@@ -8,7 +8,10 @@ class InspectorViewController: NSViewController {
     var appState: AppState?
 
     override func loadView() {
-        self.view = NSView()
+        let effectView = NSVisualEffectView()
+        effectView.material = .sidebar
+        effectView.blendingMode = .behindWindow
+        self.view = effectView
     }
 
     override func viewDidLoad() {
@@ -20,7 +23,6 @@ class InspectorViewController: NSViewController {
         guard let modelContainer, let appState else { return }
 
         let hosting = NSHostingView(rootView: InspectorView(appState: appState)
-            .background(.ultraThinMaterial)
             .ignoresSafeArea()
             .modelContainer(modelContainer)
         )

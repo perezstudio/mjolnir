@@ -26,3 +26,33 @@ struct ToolbarButtonStyle: ButtonStyle {
         }
     }
 }
+
+// MARK: - Sidebar Row Hover Style
+
+struct SidebarRowModifier: ViewModifier {
+    var isSelected: Bool = false
+    @State private var isHovered = false
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.vertical, 4)
+            .padding(.horizontal, 8)
+            .background {
+                if isSelected {
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color(nsColor: .textBackgroundColor))
+                } else if isHovered {
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(Color.primary.opacity(0.06))
+                }
+            }
+            .contentShape(Rectangle())
+            .onHover { isHovered = $0 }
+    }
+}
+
+extension View {
+    func sidebarRow(isSelected: Bool = false) -> some View {
+        modifier(SidebarRowModifier(isSelected: isSelected))
+    }
+}

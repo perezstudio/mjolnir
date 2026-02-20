@@ -8,7 +8,10 @@ class SidebarViewController: NSViewController {
     var appState: AppState?
 
     override func loadView() {
-        self.view = NSView()
+        let effectView = NSVisualEffectView()
+        effectView.material = .sidebar
+        effectView.blendingMode = .behindWindow
+        self.view = effectView
     }
 
     override func viewDidLoad() {
@@ -25,7 +28,6 @@ class SidebarViewController: NSViewController {
         }
 
         let hosting = NSHostingView(rootView: sidebarView
-            .background(.ultraThinMaterial)
             .ignoresSafeArea()
             .modelContainer(modelContainer)
         )

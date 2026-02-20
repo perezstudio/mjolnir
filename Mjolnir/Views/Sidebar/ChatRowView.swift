@@ -11,28 +11,20 @@ struct ChatRowView: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "message.fill")
-                .foregroundStyle(isSelected ? .white : .secondary)
+                .foregroundStyle(.secondary)
 
             Text(chat.title)
                 .lineLimit(1)
                 .truncationMode(.tail)
-                .foregroundStyle(isSelected ? .white : .primary)
 
             Spacer()
 
             if chat.hasWorktree {
                 Image(systemName: "arrow.triangle.branch")
-                    .foregroundStyle(isSelected ? Color.white.opacity(0.7) : Color.secondary)
-
-
+                    .foregroundStyle(.secondary)
             }
         }
-        .padding(.vertical, 3)
-        .padding(.horizontal, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 5)
-                .fill(isSelected ? Color.accentColor : Color.clear)
-        )
+        .sidebarRow(isSelected: isSelected)
         .contextMenu {
             Button("Rename...") { onRename() }
             Button("Duplicate") { onDuplicate() }

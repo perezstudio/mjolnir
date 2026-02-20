@@ -34,9 +34,7 @@ struct ProjectRowView: View {
             .buttonStyle(ToolbarButtonStyle())
             .help("New Chat")
         }
-        .padding(.vertical, 4)
-        .padding(.horizontal, 8)
-        .contentShape(Rectangle())
+        .sidebarRow()
         .onTapGesture {
             withAnimation(.easeInOut(duration: 0.2)) {
                 project.isExpanded.toggle()

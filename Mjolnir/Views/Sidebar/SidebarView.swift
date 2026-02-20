@@ -84,11 +84,8 @@ struct SidebarView: View {
                 Spacer()
             }
             .foregroundStyle(.secondary)
-            .padding(.vertical, 4)
-            .padding(.horizontal, 8)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(ToolbarButtonStyle(flexible: true))
     }
 
     private var emptyState: some View {
