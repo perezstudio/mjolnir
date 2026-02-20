@@ -36,7 +36,7 @@ struct SidebarView: View {
                 Image(systemName: "sidebar.leading")
                     .foregroundStyle(Color.accentColor)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ToolbarButtonStyle())
             .help("Hide Sidebar")
         }
         .padding(.trailing, 12)

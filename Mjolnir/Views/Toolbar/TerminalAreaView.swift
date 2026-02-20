@@ -232,7 +232,7 @@ struct TerminalSessionListView: View {
                     Image(systemName: manager.theme == .dark ? "sun.max" : "moon")
                         .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ToolbarButtonStyle())
                 .help(manager.theme == .dark ? "Switch to Light" : "Switch to Dark")
 
                 Button {
@@ -240,7 +240,7 @@ struct TerminalSessionListView: View {
                 } label: {
                     Image(systemName: "plus")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ToolbarButtonStyle())
                 .help("New Terminal")
             }
             .padding(.horizontal, 8)

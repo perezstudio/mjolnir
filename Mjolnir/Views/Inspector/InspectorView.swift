@@ -102,7 +102,7 @@ struct InspectorView: View {
                 Image(systemName: "sidebar.trailing")
                     .foregroundStyle(Color.accentColor)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ToolbarButtonStyle())
             .help("Hide Inspector")
 
             Spacer()
@@ -125,7 +125,7 @@ struct InspectorView: View {
             } label: {
                 Image(systemName: "arrow.clockwise")
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ToolbarButtonStyle())
             .help("Refresh")
             .disabled(viewModel.isLoading)
         }

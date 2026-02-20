@@ -31,7 +31,7 @@ struct ProjectRowView: View {
                     .fontWeight(.medium)
                     .foregroundStyle(.secondary)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(ToolbarButtonStyle())
             .help("New Chat")
         }
         .padding(.vertical, 4)

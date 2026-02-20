@@ -21,7 +21,7 @@ struct ChatHeaderView: View {
                         Image(systemName: "sidebar.leading")
                             .foregroundStyle(Color.secondary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ToolbarButtonStyle())
                     .help("Show Sidebar")
                 }
 
@@ -57,7 +57,7 @@ struct ChatHeaderView: View {
                     Image(systemName: "terminal")
                         .foregroundStyle(appState.isTerminalVisible ? Color.accentColor : Color.secondary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ToolbarButtonStyle())
                 .help(appState.isTerminalVisible ? "Hide Terminal" : "Show Terminal")
 
                 // Run button
@@ -67,7 +67,7 @@ struct ChatHeaderView: View {
                     Image(systemName: "play.fill")
                         .foregroundStyle(Color.secondary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ToolbarButtonStyle())
                 .help("Run Command")
 
                 // Run settings
@@ -77,7 +77,7 @@ struct ChatHeaderView: View {
                     Image(systemName: "gearshape")
                         .foregroundStyle(Color.secondary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(ToolbarButtonStyle())
                 .help("Configure Run Command")
 
                 // Open in... menu (native SwiftUI Menu)
@@ -112,7 +112,7 @@ struct ChatHeaderView: View {
                         Image(systemName: "stop.circle")
                             .foregroundStyle(.red)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ToolbarButtonStyle())
                     .help("Cancel generation")
                 }
 
@@ -123,7 +123,7 @@ struct ChatHeaderView: View {
                         Image(systemName: "sidebar.trailing")
                             .foregroundStyle(Color.secondary)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(ToolbarButtonStyle())
                     .help("Show Inspector")
                 }
             }
