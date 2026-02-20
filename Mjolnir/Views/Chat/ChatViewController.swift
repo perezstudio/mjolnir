@@ -55,8 +55,6 @@ class ChatViewController: NSSplitViewController {
         hosting.translatesAutoresizingMaskIntoConstraints = false
 
         let container = NSView()
-        container.wantsLayer = true
-        container.layer?.backgroundColor = NSColor.controlBackgroundColor.cgColor
         container.addSubview(hosting)
         NSLayoutConstraint.activate([
             hosting.topAnchor.constraint(equalTo: container.topAnchor),

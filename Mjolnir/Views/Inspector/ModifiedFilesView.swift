@@ -12,7 +12,7 @@ struct ModifiedFilesView: View {
         } else if files.isEmpty {
             VStack(spacing: 8) {
                 Image(systemName: "checkmark.circle")
-                    .font(.system(size: 28))
+                    .imageScale(.large)
                     .foregroundStyle(.green)
                 Text("Working tree clean")
                     .font(.subheadline)
@@ -27,8 +27,7 @@ struct ModifiedFilesView: View {
                             .onTapGesture { onSelectFile(file) }
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(8)
             }
         }
     }
@@ -40,24 +39,13 @@ struct ModifiedFileRow: View {
     var body: some View {
         HStack(spacing: 8) {
             Text(file.displayStatus.label)
-                .font(.system(size: 11, weight: .bold, design: .monospaced))
+                .font(.body.monospaced().bold())
                 .foregroundStyle(statusColor)
                 .frame(width: 16)
 
-            Text(fileName)
-                .font(.system(size: 12))
+            Text((file.path as NSString).lastPathComponent)
                 .lineLimit(1)
-                .truncationMode(.head)
-
-            Spacer()
-
-            if !directoryPath.isEmpty {
-                Text(directoryPath)
-                    .font(.system(size: 10))
-                    .foregroundStyle(.tertiary)
-                    .lineLimit(1)
-                    .truncationMode(.head)
-            }
+                .truncationMode(.tail)
         }
         .padding(.vertical, 4)
         .padding(.horizontal, 8)
@@ -72,14 +60,5 @@ struct ModifiedFileRow: View {
         case .deleted: return .red
         case .renamed: return .blue
         }
-    }
-
-    private var fileName: String {
-        (file.path as NSString).lastPathComponent
-    }
-
-    private var directoryPath: String {
-        let dir = (file.path as NSString).deletingLastPathComponent
-        return dir.isEmpty ? "" : dir
     }
 }

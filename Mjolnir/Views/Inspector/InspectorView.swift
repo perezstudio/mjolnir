@@ -34,16 +34,13 @@ struct InspectorView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "exclamationmark.triangle.fill")
                         .foregroundStyle(.yellow)
-                        .font(.caption)
                     Text(error)
-                        .font(.caption2)
                         .lineLimit(2)
                     Spacer()
                     Button {
                         viewModel.errorMessage = nil
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.caption2)
                     }
                     .buttonStyle(.plain)
                 }
@@ -127,7 +124,6 @@ struct InspectorView: View {
                 viewModel.refresh(workingDirectory: workingDirectory)
             } label: {
                 Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 12))
             }
             .buttonStyle(.plain)
             .help("Refresh")
@@ -149,9 +145,7 @@ struct InspectorView: View {
                 } label: {
                     HStack {
                         Image(systemName: "trash")
-                            .font(.caption)
                         Text("Discard All Changes")
-                            .font(.caption)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
@@ -178,7 +172,7 @@ struct InspectorView: View {
                             viewModel.generateCommitMessage(workingDirectory: workingDirectory)
                         } label: {
                             Image(systemName: "wand.and.sparkles.inverse")
-                                .font(.system(size: 14, weight: .bold))
+                                .fontWeight(.bold)
                                 .foregroundStyle(Color.accentColor)
                                 .symbolEffect(.pulse, isActive: viewModel.isGeneratingMessage)
                         }
@@ -193,7 +187,7 @@ struct InspectorView: View {
                             viewModel.performCommit(workingDirectory: workingDirectory)
                         } label: {
                             Image(systemName: "arrow.up.circle.fill")
-                                .font(.system(size: 22))
+                                .imageScale(.large)
                                 .foregroundStyle(
                                     canCommit ? Color.accentColor : Color.secondary
                                 )
@@ -205,8 +199,9 @@ struct InspectorView: View {
                     .padding(.horizontal, 12)
                     .padding(.bottom, 8)
                 }
-                .background(.bar)
+                .background(Color(nsColor: .textBackgroundColor))
                 .clipShape(RoundedRectangle(cornerRadius: 8))
+                .overlay(RoundedRectangle(cornerRadius: 8).stroke(Color(nsColor: .separatorColor)))
 
                 // Push button — slides in when there are commits ahead
                 if viewModel.commitsAhead > 0 {
@@ -219,10 +214,11 @@ struct InspectorView: View {
                                     .controlSize(.mini)
                             } else {
                                 Image(systemName: "icloud.and.arrow.up")
-                                    .font(.system(size: 12))
+
+
                             }
                             Text("\(viewModel.commitsAhead)")
-                                .font(.caption.monospacedDigit())
+                                .monospacedDigit()
                         }
                         .foregroundStyle(.white)
                         .frame(minWidth: 36)

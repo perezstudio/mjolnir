@@ -56,7 +56,7 @@ struct DiffView: View {
             // Header
             HStack(spacing: 0) {
                 Text("HEAD")
-                    .font(.system(size: 12, weight: .medium))
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
@@ -65,7 +65,7 @@ struct DiffView: View {
                 Divider().frame(height: 30)
 
                 Text("Working Copy")
-                    .font(.system(size: 12, weight: .medium))
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 8)
@@ -136,7 +136,7 @@ struct DiffLinePaneView: View {
         HStack(spacing: 0) {
             // Line number
             Text(lineNumber.map { "\($0)" } ?? "")
-                .font(.system(size: 11, design: .monospaced))
+                .monospaced()
                 .foregroundStyle(.tertiary)
                 .frame(width: 40, alignment: .trailing)
                 .padding(.trailing, 8)
@@ -148,7 +148,7 @@ struct DiffLinePaneView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
             } else {
                 Text("")
-                    .font(.system(size: 12, design: .monospaced))
+                    .monospaced()
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }

@@ -71,7 +71,7 @@ struct ChatInputView: View {
                 if isProcessing {
                     Button(action: onCancel) {
                         Image(systemName: "stop.circle.fill")
-                            .font(.system(size: 22))
+                            .font(.title2)
                             .foregroundStyle(.red)
                     }
                     .buttonStyle(.plain)
@@ -79,7 +79,7 @@ struct ChatInputView: View {
                 } else {
                     Button(action: onSend) {
                         Image(systemName: "arrow.up.circle.fill")
-                            .font(.system(size: 22))
+                            .font(.title2)
                             .foregroundStyle(
                                 text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
                                     ? Color.secondary : Color.accentColor

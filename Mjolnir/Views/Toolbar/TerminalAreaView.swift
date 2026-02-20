@@ -85,10 +85,11 @@ class TerminalContentViewController: NSViewController, LocalProcessTerminalViewD
     private var currentTheme: TerminalTheme?
     private var observationTask: Task<Void, Never>?
 
+    private let contentInset: CGFloat = 8
+
     override func loadView() {
         let v = NSView()
         v.wantsLayer = true
-        v.autoresizesSubviews = true
         self.view = v
     }
 
@@ -127,11 +128,17 @@ class TerminalContentViewController: NSViewController, LocalProcessTerminalViewD
         // Add new sessions
         for session in sessions {
             if terminals[session.id] == nil {
-                let termView = LocalProcessTerminalView(frame: view.bounds)
+                let termView = LocalProcessTerminalView(frame: .zero)
                 termView.processDelegate = self
-                termView.autoresizingMask = [.width, .height]
+                termView.translatesAutoresizingMaskIntoConstraints = false
                 applyTheme(theme, to: termView)
                 view.addSubview(termView)
+                NSLayoutConstraint.activate([
+                    termView.topAnchor.constraint(equalTo: view.topAnchor, constant: contentInset),
+                    termView.leadingAnchor.constraint(equalTo: view.leadingAnchor, constant: contentInset),
+                    termView.trailingAnchor.constraint(equalTo: view.trailingAnchor, constant: -contentInset),
+                    termView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: -contentInset),
+                ])
                 terminals[session.id] = termView
                 viewToSession[ObjectIdentifier(termView)] = session.id
 
@@ -164,13 +171,9 @@ class TerminalContentViewController: NSViewController, LocalProcessTerminalViewD
             terminals.removeValue(forKey: id)
         }
 
-        // Show only active, update frames
+        // Show only active
         for (id, termView) in terminals {
-            let isActive = id == activeID
-            termView.isHidden = !isActive
-            if isActive {
-                termView.frame = view.bounds
-            }
+            termView.isHidden = id != activeID
         }
 
         // Apply theme if changed
@@ -219,7 +222,6 @@ struct TerminalSessionListView: View {
         VStack(spacing: 0) {
             HStack {
                 Text("Terminals")
-                    .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
 
@@ -228,7 +230,6 @@ struct TerminalSessionListView: View {
                     manager.theme = manager.theme == .dark ? .light : .dark
                 } label: {
                     Image(systemName: manager.theme == .dark ? "sun.max" : "moon")
-                        .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)
@@ -238,7 +239,6 @@ struct TerminalSessionListView: View {
                     manager.addSession(workingDirectory: workingDirectory)
                 } label: {
                     Image(systemName: "plus")
-                        .font(.caption)
                 }
                 .buttonStyle(.plain)
                 .help("New Terminal")
@@ -279,15 +279,13 @@ struct TerminalSessionRow: View {
     var body: some View {
         HStack(spacing: 6) {
             Image(systemName: "terminal")
-                .font(.caption2)
             Text(session.title)
-                .font(.caption)
                 .lineLimit(1)
             Spacer()
             if isActive || isHovered {
                 Button(action: onClose) {
                     Image(systemName: "xmark")
-                        .font(.system(size: 8))
+                        .imageScale(.small)
                         .foregroundStyle(.secondary)
                 }
                 .buttonStyle(.plain)

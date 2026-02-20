@@ -15,13 +15,12 @@ struct FileTreeView: View {
                         FileNodeRow(node: child, depth: 0)
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
+                .padding(8)
             }
         } else {
             VStack(spacing: 8) {
                 Image(systemName: "folder")
-                    .font(.system(size: 28))
+                    .imageScale(.large)
                     .foregroundStyle(.tertiary)
                 Text("No project selected")
                     .font(.subheadline)
@@ -42,21 +41,21 @@ struct FileNodeRow: View {
             HStack(spacing: 4) {
                 if node.isDirectory {
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 9))
                         .foregroundStyle(.tertiary)
                         .frame(width: 12)
                 } else {
                     Spacer().frame(width: 12)
                 }
 
-                Image(systemName: node.isDirectory
-                    ? (isExpanded ? "folder.fill" : "folder")
-                    : fileIcon(for: node.name))
-                    .font(.system(size: 12))
-                    .foregroundStyle(node.isDirectory ? .secondary : .tertiary)
+                let iconInfo =
+                    node.isDirectory
+                    ? (isExpanded ? ("folder.fill", Color.secondary) : ("folder", Color.secondary))
+                    : fileIconAndColor(for: node.name)
+
+                Image(systemName: iconInfo.0)
+                    .foregroundStyle(iconInfo.1)
 
                 Text(node.name)
-                    .font(.system(size: 12))
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
@@ -80,19 +79,32 @@ struct FileNodeRow: View {
         }
     }
 
-    private func fileIcon(for name: String) -> String {
+    private func fileIconAndColor(for name: String) -> (String, Color) {
         let ext = (name as NSString).pathExtension.lowercased()
         switch ext {
-        case "swift": return "swift"
-        case "js", "ts", "jsx", "tsx": return "curlybraces"
-        case "json": return "curlybraces.square"
-        case "md", "txt", "rtf": return "doc.text"
-        case "png", "jpg", "jpeg", "gif", "svg": return "photo"
-        case "py": return "chevron.left.forwardslash.chevron.right"
-        case "html", "css": return "globe"
-        case "yml", "yaml", "toml": return "gearshape"
-        case "sh", "zsh", "bash": return "terminal"
-        default: return "doc"
+        case "swift": return ("swift", .orange)
+        case "ts": return ("curlybraces", .blue)
+        case "tsx": return ("curlybraces", .blue)
+        case "js": return ("curlybraces", .yellow)
+        case "jsx": return ("curlybraces", .cyan)
+        case "json": return ("curlybraces.square", .yellow)
+        case "md", "txt", "rtf": return ("doc.text", .teal)
+        case "png", "jpg", "jpeg", "gif": return ("photo", .purple)
+        case "svg": return ("photo", .orange)
+        case "py": return ("chevron.left.forwardslash.chevron.right", .blue)
+        case "rb": return ("chevron.left.forwardslash.chevron.right", .red)
+        case "html": return ("globe", .orange)
+        case "css", "scss", "less": return ("paintbrush", .blue)
+        case "yml", "yaml", "toml": return ("gearshape", .gray)
+        case "sh", "zsh", "bash": return ("terminal", .green)
+        case "go": return ("chevron.left.forwardslash.chevron.right", .cyan)
+        case "rs": return ("chevron.left.forwardslash.chevron.right", .orange)
+        case "c", "h": return ("chevron.left.forwardslash.chevron.right", .blue)
+        case "cpp", "hpp", "cc": return ("chevron.left.forwardslash.chevron.right", .blue)
+        case "java", "kt": return ("cup.and.saucer", .orange)
+        case "entitlements", "plist": return ("gearshape", .gray)
+        case "xcodeproj", "xcworkspace": return ("hammer", .blue)
+        default: return ("doc", .secondary)
         }
     }
 }

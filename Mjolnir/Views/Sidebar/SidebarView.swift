@@ -34,7 +34,7 @@ struct SidebarView: View {
                 onPickFolder?()
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 13, weight: .medium))
+                    .fontWeight(.medium)
             }
             .buttonStyle(.plain)
             .help("Add Project")
@@ -73,7 +73,7 @@ struct SidebarView: View {
     private var emptyState: some View {
         VStack(spacing: 8) {
             Image(systemName: "folder.badge.plus")
-                .font(.system(size: 28))
+                .imageScale(.large)
                 .foregroundStyle(.tertiary)
             Text("No Projects")
                 .font(.subheadline)

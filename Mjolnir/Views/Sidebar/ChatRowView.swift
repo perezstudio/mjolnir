@@ -12,7 +12,6 @@ struct ChatRowView: View {
         HStack(spacing: 6) {
             Image(systemName: "bubble.left")
                 .foregroundStyle(isSelected ? .white : .secondary)
-                .font(.system(size: 12))
 
             Text(chat.title)
                 .lineLimit(1)
@@ -24,7 +23,8 @@ struct ChatRowView: View {
             if chat.hasWorktree {
                 Image(systemName: "arrow.triangle.branch")
                     .foregroundStyle(isSelected ? Color.white.opacity(0.7) : Color.secondary)
-                    .font(.system(size: 10))
+
+
             }
         }
         .padding(.vertical, 3)

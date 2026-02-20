@@ -12,7 +12,6 @@ struct ProjectRowView: View {
         HStack(spacing: 6) {
             Image(systemName: "folder.fill")
                 .foregroundStyle(.secondary)
-                .font(.system(size: 13))
 
             Text(project.name)
                 .lineLimit(1)
@@ -29,7 +28,7 @@ struct ProjectRowView: View {
                 onNewChat()
             } label: {
                 Image(systemName: "plus")
-                    .font(.system(size: 11, weight: .medium))
+                    .fontWeight(.medium)
                     .foregroundStyle(.secondary)
             }
             .buttonStyle(.plain)

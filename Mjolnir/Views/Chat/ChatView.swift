@@ -171,7 +171,7 @@ struct ChatView: View {
     private var emptyChatState: some View {
         VStack(spacing: 12) {
             Image(systemName: "bubble.left.and.bubble.right")
-                .font(.system(size: 40))
+                .imageScale(.large)
                 .foregroundStyle(.tertiary)
             Text("Select a chat to start")
                 .font(.title3)
