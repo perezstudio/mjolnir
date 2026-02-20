@@ -12,6 +12,13 @@ struct AppSplitView<Sidebar: View, Content: View, Inspector: View>: NSViewContro
 
     @Environment(\.modelContext) private var modelContext
 
+    class Coordinator {
+        var lastSidebarVisible: Bool?
+        var lastInspectorVisible: Bool?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSViewController(context: Context) -> NSSplitViewController {
         let splitVC = NSSplitViewController()
         let container = modelContext.container
@@ -62,20 +69,30 @@ struct AppSplitView<Sidebar: View, Content: View, Inspector: View>: NSViewContro
         splitVC.addSplitViewItem(inspectorItem)
         splitVC.splitView.dividerStyle = .thin
 
+        context.coordinator.lastSidebarVisible = isSidebarVisible
+        context.coordinator.lastInspectorVisible = isInspectorVisible
+
         return splitVC
     }
 
     func updateNSViewController(_ splitVC: NSSplitViewController, context: Context) {
         guard splitVC.splitViewItems.count == 3 else { return }
+        let coord = context.coordinator
 
-        let sidebarItem = splitVC.splitViewItems[0]
-        if sidebarItem.isCollapsed == isSidebarVisible {
-            sidebarItem.animator().isCollapsed = !isSidebarVisible
+        if coord.lastSidebarVisible != isSidebarVisible {
+            coord.lastSidebarVisible = isSidebarVisible
+            let visible = isSidebarVisible
+            DispatchQueue.main.async {
+                splitVC.splitViewItems[0].isCollapsed = !visible
+            }
         }
 
-        let inspectorItem = splitVC.splitViewItems[2]
-        if inspectorItem.isCollapsed == isInspectorVisible {
-            inspectorItem.animator().isCollapsed = !isInspectorVisible
+        if coord.lastInspectorVisible != isInspectorVisible {
+            coord.lastInspectorVisible = isInspectorVisible
+            let visible = isInspectorVisible
+            DispatchQueue.main.async {
+                splitVC.splitViewItems[2].isCollapsed = !visible
+            }
         }
     }
 

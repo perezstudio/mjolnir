@@ -7,6 +7,12 @@ struct ChatSplitView<Top: View, Bottom: View>: NSViewControllerRepresentable {
     @ViewBuilder var top: Top
     @ViewBuilder var bottom: Bottom
 
+    class Coordinator {
+        var lastBottomVisible: Bool?
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
     func makeNSViewController(context: Context) -> NSSplitViewController {
         let splitVC = NSSplitViewController()
         splitVC.splitView.isVertical = false // vertical stack (top / bottom)
@@ -30,15 +36,21 @@ struct ChatSplitView<Top: View, Bottom: View>: NSViewControllerRepresentable {
         bottomItem.minimumThickness = 80
         splitVC.addSplitViewItem(bottomItem)
 
+        context.coordinator.lastBottomVisible = isBottomVisible
+
         return splitVC
     }
 
     func updateNSViewController(_ splitVC: NSSplitViewController, context: Context) {
         guard splitVC.splitViewItems.count == 2 else { return }
+        let coord = context.coordinator
 
-        let bottomItem = splitVC.splitViewItems[1]
-        if bottomItem.isCollapsed == isBottomVisible {
-            bottomItem.animator().isCollapsed = !isBottomVisible
+        if coord.lastBottomVisible != isBottomVisible {
+            coord.lastBottomVisible = isBottomVisible
+            let visible = isBottomVisible
+            DispatchQueue.main.async {
+                splitVC.splitViewItems[1].isCollapsed = !visible
+            }
         }
     }
 
