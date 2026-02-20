@@ -2,6 +2,22 @@ import AppKit
 import SwiftUI
 import SwiftTerm
 
+// MARK: - SwiftUI Representable
+
+struct TerminalAreaRepresentable: NSViewControllerRepresentable {
+    var terminalManager: TerminalManager
+    var appState: AppState
+
+    func makeNSViewController(context: Context) -> TerminalAreaSplitViewController {
+        let vc = TerminalAreaSplitViewController()
+        vc.terminalManager = terminalManager
+        vc.appState = appState
+        return vc
+    }
+
+    func updateNSViewController(_ nsViewController: TerminalAreaSplitViewController, context: Context) {}
+}
+
 // MARK: - Contained Split View (prevents divider events from propagating to parent NSSplitView)
 
 private class ContainedSplitView: NSSplitView {
