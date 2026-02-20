@@ -1,6 +1,8 @@
 import Foundation
 
 actor ClaudeCLIService {
+    static let shared = ClaudeCLIService()
+
     private var currentProcess: Process?
     private let decoder = JSONDecoder()
 

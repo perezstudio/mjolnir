@@ -30,9 +30,9 @@ final class InspectorViewModel {
 
     // MARK: - Dependencies
 
-    private let gitService = GitService()
+    private let gitService = GitService.shared
     private let fileSystemService = FileSystemService()
-    private let cliService = ClaudeCLIService()
+    private let cliService = ClaudeCLIService.shared
     private var watchingDirectory: String?
 
     // MARK: - File Watching

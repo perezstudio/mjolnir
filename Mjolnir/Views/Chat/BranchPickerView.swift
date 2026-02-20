@@ -10,7 +10,7 @@ struct BranchPickerView: View {
     @State private var isLoading = true
     @State private var errorMessage: String?
 
-    private let gitService = GitService()
+    private let gitService = GitService.shared
 
     private var filteredBranches: [String] {
         if searchText.isEmpty {

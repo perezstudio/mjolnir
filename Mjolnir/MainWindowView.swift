@@ -10,19 +10,14 @@ struct MainWindowView: View {
         AppSplitView(
             isSidebarVisible: $appState.isSidebarVisible,
             isInspectorVisible: $appState.isInspectorVisible,
+            isTerminalVisible: $appState.isTerminalVisible,
+            terminalManager: terminalManager,
+            appState: appState,
             sidebar: {
                 SidebarView(appState: appState, onPickFolder: presentFolderPicker)
             },
             content: {
-                ChatSplitView(
-                    isBottomVisible: $appState.isTerminalVisible,
-                    top: {
-                        ChatView(appState: appState, terminalManager: terminalManager)
-                    },
-                    bottom: {
-                        TerminalAreaRepresentable(terminalManager: terminalManager, appState: appState)
-                    }
-                )
+                ChatView(appState: appState, terminalManager: terminalManager)
             },
             inspector: {
                 InspectorView(appState: appState)

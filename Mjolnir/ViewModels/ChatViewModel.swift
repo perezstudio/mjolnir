@@ -56,7 +56,7 @@ final class ChatViewModel {
 
     // MARK: - Dependencies
 
-    private let cliService = ClaudeCLIService()
+    private let cliService = ClaudeCLIService.shared
     private let sessionManager = CLISessionManager()
     private var streamTask: Task<Void, Never>?
     private var didPersistMessage = false

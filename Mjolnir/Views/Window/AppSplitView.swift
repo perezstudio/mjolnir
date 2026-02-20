@@ -5,6 +5,10 @@ import SwiftData
 struct AppSplitView<Sidebar: View, Content: View, Inspector: View>: NSViewControllerRepresentable {
     @Binding var isSidebarVisible: Bool
     @Binding var isInspectorVisible: Bool
+    @Binding var isTerminalVisible: Bool
+
+    var terminalManager: TerminalManager
+    var appState: AppState
 
     @ViewBuilder var sidebar: Sidebar
     @ViewBuilder var content: Content
@@ -15,6 +19,8 @@ struct AppSplitView<Sidebar: View, Content: View, Inspector: View>: NSViewContro
     class Coordinator {
         var lastSidebarVisible: Bool?
         var lastInspectorVisible: Bool?
+        var lastTerminalVisible: Bool?
+        var contentSplitVC: NSSplitViewController?
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -38,14 +44,35 @@ struct AppSplitView<Sidebar: View, Content: View, Inspector: View>: NSViewContro
         sidebarItem.minimumThickness = 220
         sidebarItem.maximumThickness = 350
 
-        // Content panel — plain background
-        let contentVC = NSViewController()
-        contentVC.view = NSView()
+        // Content panel — vertical split (chat + terminal)
+        let contentSplitVC = NSSplitViewController()
+        contentSplitVC.splitView.isVertical = false
+        contentSplitVC.splitView.dividerStyle = .thin
+
+        // Chat content (top)
+        let chatVC = NSViewController()
+        chatVC.view = NSView()
         embedHostingView(
             rootView: content.ignoresSafeArea().modelContainer(container),
-            in: contentVC.view
+            in: chatVC.view
         )
-        let contentItem = NSSplitViewItem(viewController: contentVC)
+        let chatItem = NSSplitViewItem(viewController: chatVC)
+        chatItem.minimumThickness = 200
+        contentSplitVC.addSplitViewItem(chatItem)
+
+        // Terminal area (bottom) — direct VC, no hosting view wrapper
+        let terminalAreaVC = TerminalAreaSplitViewController()
+        terminalAreaVC.terminalManager = terminalManager
+        terminalAreaVC.appState = appState
+        let terminalItem = NSSplitViewItem(viewController: terminalAreaVC)
+        terminalItem.canCollapse = true
+        terminalItem.isCollapsed = !isTerminalVisible
+        terminalItem.minimumThickness = 80
+        contentSplitVC.addSplitViewItem(terminalItem)
+
+        context.coordinator.contentSplitVC = contentSplitVC
+
+        let contentItem = NSSplitViewItem(viewController: contentSplitVC)
         contentItem.minimumThickness = 400
 
         // Inspector panel — NSVisualEffectView background
@@ -71,6 +98,7 @@ struct AppSplitView<Sidebar: View, Content: View, Inspector: View>: NSViewContro
 
         context.coordinator.lastSidebarVisible = isSidebarVisible
         context.coordinator.lastInspectorVisible = isInspectorVisible
+        context.coordinator.lastTerminalVisible = isTerminalVisible
 
         return splitVC
     }
@@ -94,12 +122,23 @@ struct AppSplitView<Sidebar: View, Content: View, Inspector: View>: NSViewContro
                 splitVC.splitViewItems[2].isCollapsed = !visible
             }
         }
+
+        if coord.lastTerminalVisible != isTerminalVisible,
+           let contentSplitVC = coord.contentSplitVC,
+           contentSplitVC.splitViewItems.count == 2 {
+            coord.lastTerminalVisible = isTerminalVisible
+            let visible = isTerminalVisible
+            DispatchQueue.main.async {
+                contentSplitVC.splitViewItems[1].isCollapsed = !visible
+            }
+        }
     }
 
     // MARK: - Helpers
 
     private func embedHostingView<V: View>(rootView: V, in parent: NSView) {
         let hosting = NSHostingView(rootView: rootView)
+        hosting.sizingOptions = []
         hosting.translatesAutoresizingMaskIntoConstraints = false
         parent.addSubview(hosting)
         NSLayoutConstraint.activate([

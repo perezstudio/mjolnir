@@ -127,43 +127,12 @@ struct ChatView: View {
     // MARK: - Message List
 
     private func messageList(for chat: Chat) -> some View {
-        ScrollViewReader { proxy in
-            ScrollView {
-                Spacer()
-                LazyVStack(spacing: 12) {
-                    let sorted = chat.messages.sorted { $0.createdAt < $1.createdAt }
-                    ForEach(sorted) { message in
-                        MessageBubbleView(message: message)
-                            .id(message.id)
-                    }
-
-                    // Streaming assistant message (not yet persisted)
-                    if viewModel.isProcessing || !viewModel.streamingText.isEmpty {
-                        StreamingMessageView(
-                            text: viewModel.streamingText,
-                            toolCalls: viewModel.streamingToolCalls,
-                            isProcessing: viewModel.isProcessing
-                        )
-                        .id("streaming")
-                    }
-                }
-                .padding(16)
-                .frame(maxWidth: .infinity)
-            }
-            .defaultScrollAnchor(.bottom)
-            .onChange(of: viewModel.streamingText) { _, _ in
-                withAnimation(.easeOut(duration: 0.1)) {
-                    proxy.scrollTo("streaming", anchor: .bottom)
-                }
-            }
-            .onChange(of: chat.messages.count) { _, _ in
-                if let last = chat.messages.sorted(by: { $0.createdAt < $1.createdAt }).last {
-                    withAnimation(.easeOut(duration: 0.1)) {
-                        proxy.scrollTo(last.id, anchor: .bottom)
-                    }
-                }
-            }
-        }
+        MessageListView(
+            chatID: chat.id,
+            streamingText: viewModel.streamingText,
+            streamingToolCalls: viewModel.streamingToolCalls,
+            isProcessing: viewModel.isProcessing
+        )
     }
 
     // MARK: - Empty State

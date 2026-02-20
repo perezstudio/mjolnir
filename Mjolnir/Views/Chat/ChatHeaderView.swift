@@ -13,7 +13,7 @@ struct ChatHeaderView: View {
     @State private var showBranchPicker = false
     @State private var currentBranch = ""
 
-    private let gitService = GitService()
+    private let gitService = GitService.shared
 
     var body: some View {
         VStack(spacing: 0) {

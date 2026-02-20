@@ -38,6 +38,8 @@ enum FileChangeStatus: String {
 
 actor GitService {
 
+    static let shared = GitService()
+
     func currentBranch(at workingDirectory: String) throws -> String {
         let output = try runGit(args: ["rev-parse", "--abbrev-ref", "HEAD"], at: workingDirectory)
         return output.trimmingCharacters(in: .whitespacesAndNewlines)

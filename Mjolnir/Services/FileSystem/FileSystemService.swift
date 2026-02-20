@@ -116,7 +116,7 @@ actor FileSystemService {
         watcher = nil
     }
 
-    func buildFileTree(at path: String, maxDepth: Int = 5) throws -> FileNode {
+    func buildFileTree(at path: String, maxDepth: Int = 3) throws -> FileNode {
         let url = URL(fileURLWithPath: path)
         guard FileManager.default.fileExists(atPath: path) else {
             throw FileSystemError.pathNotFound(path)

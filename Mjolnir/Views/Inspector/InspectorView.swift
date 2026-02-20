@@ -59,8 +59,18 @@ struct InspectorView: View {
         .onChange(of: appState.selectedChat?.id) { _, _ in
             viewModel.clearDiff()
             viewModel.stopWatching()
-            viewModel.refresh(workingDirectory: workingDirectory)
-            viewModel.startWatching(workingDirectory: workingDirectory)
+            if appState.isInspectorVisible {
+                viewModel.refresh(workingDirectory: workingDirectory)
+                viewModel.startWatching(workingDirectory: workingDirectory)
+            }
+        }
+        .onChange(of: appState.isInspectorVisible) { _, visible in
+            if visible {
+                viewModel.refresh(workingDirectory: workingDirectory)
+                viewModel.startWatching(workingDirectory: workingDirectory)
+            } else {
+                viewModel.stopWatching()
+            }
         }
         .onChange(of: viewModel.diffState.isReady) { _, isReady in
             if isReady {
@@ -71,13 +81,6 @@ struct InspectorView: View {
                 )
                 viewModel.clearDiff()
             }
-        }
-        .onAppear {
-            viewModel.refresh(workingDirectory: workingDirectory)
-            viewModel.startWatching(workingDirectory: workingDirectory)
-        }
-        .onDisappear {
-            viewModel.stopWatching()
         }
         .alert("Discard All Changes?", isPresented: $viewModel.showingDiscardConfirmation) {
             Button("Discard", role: .destructive) {
