@@ -34,7 +34,7 @@ struct SidebarView: View {
                 appState.isSidebarVisible = false
             } label: {
                 Image(systemName: "sidebar.leading")
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Color.secondary)
             }
             .buttonStyle(ToolbarButtonStyle())
             .help("Hide Sidebar")

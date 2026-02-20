@@ -100,7 +100,7 @@ struct InspectorView: View {
                 }
             } label: {
                 Image(systemName: "sidebar.trailing")
-                    .foregroundStyle(Color.accentColor)
+                    .foregroundStyle(Color.secondary)
             }
             .buttonStyle(ToolbarButtonStyle())
             .help("Hide Inspector")

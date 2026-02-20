@@ -1,11 +1,13 @@
 import SwiftUI
 
 struct ToolbarButtonStyle: ButtonStyle {
+    var flexible: Bool = false
     @State private var isHovered = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .frame(width: 28, height: 28)
+            .frame(width: flexible ? nil : 28, height: 28)
+            .padding(.horizontal, flexible ? 8 : 0)
             .contentShape(Rectangle())
             .background(
                 RoundedRectangle(cornerRadius: 5)

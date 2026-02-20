@@ -97,10 +97,13 @@ struct ChatHeaderView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: "folder")
-                        .foregroundStyle(Color.secondary)
+                    HStack(spacing: 4) {
+                        Image(systemName: "folder")
+                        Text("Open")
+                    }
+                    .foregroundStyle(Color.secondary)
                 }
-                .menuStyle(.borderlessButton)
+                .buttonStyle(ToolbarButtonStyle(flexible: true))
                 .fixedSize()
                 .help("Open In...")
 
