@@ -31,15 +31,6 @@ struct SidebarView: View {
             Spacer()
 
             Button {
-                onPickFolder?()
-            } label: {
-                Image(systemName: "plus")
-                    .fontWeight(.medium)
-            }
-            .buttonStyle(.plain)
-            .help("Add Project")
-
-            Button {
                 appState.isSidebarVisible = false
             } label: {
                 Image(systemName: "sidebar.leading")
@@ -57,6 +48,7 @@ struct SidebarView: View {
     private var projectList: some View {
         ScrollView {
             LazyVStack(spacing: 2) {
+                addProjectButton
                 if projects.isEmpty {
                     emptyState
                 } else {
@@ -68,6 +60,35 @@ struct SidebarView: View {
             .padding(.horizontal, 8)
             .padding(.top, 4)
         }
+        .alert("Delete Project?", isPresented: $showDeleteConfirmation, presenting: projectToDelete) { proj in
+            Button("Delete", role: .destructive) {
+                viewModel.deleteProject(proj, modelContext: modelContext)
+                if appState.selectedProject?.id == proj.id {
+                    appState.selectedProject = nil
+                    appState.selectedChat = nil
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: { proj in
+            Text("This will delete \"\(proj.name)\" and all its chats. This cannot be undone.")
+        }
+    }
+
+    private var addProjectButton: some View {
+        Button {
+            onPickFolder?()
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "plus")
+                Text("Add Project")
+                Spacer()
+            }
+            .foregroundStyle(.secondary)
+            .padding(.vertical, 4)
+            .padding(.horizontal, 8)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var emptyState: some View {
@@ -90,35 +111,22 @@ struct SidebarView: View {
 
     @ViewBuilder
     private func projectSection(for project: Project) -> some View {
-        @Bindable var project = project
-        DisclosureGroup(isExpanded: $project.isExpanded) {
+        ProjectRowView(
+            project: project,
+            onNewChat: { createChat(in: project) },
+            onNewWorktreeChat: { createWorktreeChat(in: project) },
+            onRename: { beginRenameProject(project) },
+            onDelete: {
+                projectToDelete = project
+                showDeleteConfirmation = true
+            }
+        )
+
+        if project.isExpanded {
             let sortedChats = project.chats.sorted { $0.sortOrder < $1.sortOrder }
             ForEach(sortedChats) { chat in
                 chatRow(for: chat)
             }
-        } label: {
-            ProjectRowView(
-                project: project,
-                onNewChat: { createChat(in: project) },
-                onNewWorktreeChat: { createWorktreeChat(in: project) },
-                onRename: { beginRenameProject(project) },
-                onDelete: {
-                    projectToDelete = project
-                    showDeleteConfirmation = true
-                }
-            )
-        }
-        .alert("Delete Project?", isPresented: $showDeleteConfirmation, presenting: projectToDelete) { proj in
-            Button("Delete", role: .destructive) {
-                viewModel.deleteProject(proj, modelContext: modelContext)
-                if appState.selectedProject?.id == proj.id {
-                    appState.selectedProject = nil
-                    appState.selectedChat = nil
-                }
-            }
-            Button("Cancel", role: .cancel) {}
-        } message: { proj in
-            Text("This will delete \"\(proj.name)\" and all its chats. This cannot be undone.")
         }
     }
 
@@ -140,6 +148,9 @@ struct SidebarView: View {
         .onTapGesture {
             appState.selectedProject = chat.project
             appState.selectedChat = chat
+            if !appState.isInspectorVisible {
+                appState.isInspectorVisible = true
+            }
         }
     }
 

@@ -10,7 +10,7 @@ struct ChatRowView: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: "bubble.left")
+            Image(systemName: "message.fill")
                 .foregroundStyle(isSelected ? .white : .secondary)
 
             Text(chat.title)

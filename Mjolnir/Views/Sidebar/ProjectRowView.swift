@@ -10,8 +10,9 @@ struct ProjectRowView: View {
 
     var body: some View {
         HStack(spacing: 6) {
-            Image(systemName: "folder.fill")
-                .foregroundStyle(.secondary)
+            Image(systemName: project.isExpanded ? "text.below.folder.fill" : "folder.fill")
+                .foregroundStyle(.blue)
+                .contentTransition(.symbolEffect(.replace))
 
             Text(project.name)
                 .lineLimit(1)
@@ -20,7 +21,6 @@ struct ProjectRowView: View {
             Spacer()
 
             Text("\(project.chats.count)")
-                .font(.caption2)
                 .foregroundStyle(.tertiary)
                 .monospacedDigit()
 
@@ -33,6 +33,14 @@ struct ProjectRowView: View {
             }
             .buttonStyle(.plain)
             .help("New Chat")
+        }
+        .padding(.vertical, 4)
+        .padding(.horizontal, 8)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                project.isExpanded.toggle()
+            }
         }
         .contextMenu {
             Button("New Chat") { onNewChat() }
