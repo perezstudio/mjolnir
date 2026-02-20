@@ -20,10 +20,6 @@ struct ProjectRowView: View {
 
             Spacer()
 
-            Text("\(project.chats.count)")
-                .foregroundStyle(.tertiary)
-                .monospacedDigit()
-
             Button {
                 onNewChat()
             } label: {

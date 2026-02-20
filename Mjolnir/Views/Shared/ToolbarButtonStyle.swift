@@ -35,6 +35,7 @@ struct SidebarRowModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
+            .frame(minHeight: 28)
             .padding(.vertical, 4)
             .padding(.horizontal, 8)
             .background {

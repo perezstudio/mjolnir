@@ -75,17 +75,16 @@ struct SidebarView: View {
     }
 
     private var addProjectButton: some View {
-        Button {
-            onPickFolder?()
-        } label: {
-            HStack(spacing: 6) {
-                Image(systemName: "plus")
-                Text("Add Project")
-                Spacer()
-            }
-            .foregroundStyle(.secondary)
+        HStack(spacing: 6) {
+            Image(systemName: "plus")
+            Text("Add Project")
+            Spacer()
         }
-        .buttonStyle(ToolbarButtonStyle(flexible: true))
+        .foregroundStyle(.secondary)
+        .sidebarRow()
+        .onTapGesture {
+            onPickFolder?()
+        }
     }
 
     private var emptyState: some View {

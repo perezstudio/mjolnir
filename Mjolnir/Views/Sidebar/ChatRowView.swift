@@ -23,6 +23,16 @@ struct ChatRowView: View {
                 Image(systemName: "arrow.triangle.branch")
                     .foregroundStyle(.secondary)
             }
+
+            Button {
+                onDelete()
+            } label: {
+                Image(systemName: "xmark")
+                    .fontWeight(.medium)
+                    .foregroundStyle(.secondary)
+            }
+            .buttonStyle(ToolbarButtonStyle())
+            .help("Delete Chat")
         }
         .sidebarRow(isSelected: isSelected)
         .contextMenu {
