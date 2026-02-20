@@ -124,6 +124,19 @@ actor GitService {
         return try String(contentsOfFile: fullPath, encoding: .utf8)
     }
 
+    func listBranches(at workingDirectory: String) throws -> [String] {
+        let output = try runGit(args: ["branch", "--format=%(refname:short)"], at: workingDirectory)
+        return output
+            .components(separatedBy: "\n")
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty }
+            .sorted()
+    }
+
+    func switchBranch(_ branch: String, at workingDirectory: String) throws {
+        try runGit(args: ["checkout", branch], at: workingDirectory)
+    }
+
     func discardChanges(files: [String], at workingDirectory: String) throws {
         let allStatus = try status(at: workingDirectory)
         let untrackedPaths = Set(allStatus.filter { $0.workTreeStatus == "?" }.map(\.path))

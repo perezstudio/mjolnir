@@ -10,6 +10,10 @@ struct ChatHeaderView: View {
 
     @State private var isEditingTitle = false
     @State private var editedTitle = ""
+    @State private var showBranchPicker = false
+    @State private var currentBranch = ""
+
+    private let gitService = GitService()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -25,28 +29,7 @@ struct ChatHeaderView: View {
                     .help("Show Sidebar")
                 }
 
-                if isEditingTitle {
-                    TextField("Chat title", text: $editedTitle)
-                        .textFieldStyle(.roundedBorder)
-                        .frame(maxWidth: 200)
-                        .onSubmit {
-                            chat.title = editedTitle
-                            chat.updatedAt = Date()
-                            isEditingTitle = false
-                        }
-                } else {
-                    Text(chat.title)
-                        .font(.headline)
-                        .lineLimit(1)
-                        .onTapGesture(count: 2) {
-                            editedTitle = chat.title
-                            isEditingTitle = true
-                        }
-                }
-
-                if chat.hasWorktree, let branch = chat.branchName {
-                    GitBranchBadge(branchName: branch)
-                }
+                titleGroup
 
                 Spacer()
 
@@ -137,26 +120,72 @@ struct ChatHeaderView: View {
             Divider().opacity(0.5)
         }
         .background(.ultraThinMaterial)
+        .onAppear { loadBranch() }
+        .onChange(of: chat.id) { _, _ in loadBranch() }
     }
-}
 
-// MARK: - Git Branch Badge
+    // MARK: - Title Group
 
-struct GitBranchBadge: View {
-    let branchName: String
+    @ViewBuilder
+    private var titleGroup: some View {
+        if isEditingTitle {
+            TextField("Chat title", text: $editedTitle)
+                .textFieldStyle(.roundedBorder)
+                .frame(maxWidth: 200)
+                .onSubmit {
+                    chat.title = editedTitle
+                    chat.updatedAt = Date()
+                    isEditingTitle = false
+                }
+        } else {
+            Button {
+                showBranchPicker = true
+            } label: {
+                HStack(spacing: 6) {
+                    Image(systemName: "arrow.triangle.branch")
+                        .foregroundStyle(.secondary)
 
-    var body: some View {
-        HStack(spacing: 3) {
-            Image(systemName: "arrow.triangle.branch")
-                .font(.caption2)
-            Text(branchName)
-                .font(.caption)
-                .lineLimit(1)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(chat.title)
+                            .font(.headline)
+                            .lineLimit(1)
+
+                        if !currentBranch.isEmpty {
+                            HStack(spacing: 2) {
+                                Text(currentBranch)
+                                    .lineLimit(1)
+                                Image(systemName: "chevron.right")
+                                    .imageScale(.small)
+                            }
+                            .foregroundStyle(.secondary)
+                        }
+                    }
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .onTapGesture(count: 2) {
+                editedTitle = chat.title
+                isEditingTitle = true
+            }
+            .popover(isPresented: $showBranchPicker) {
+                BranchPickerView(
+                    workingDirectory: chat.workingDirectory,
+                    currentBranch: $currentBranch
+                )
+            }
         }
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 2)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(Capsule())
+    }
+
+    // MARK: - Branch Loading
+
+    private func loadBranch() {
+        Task {
+            do {
+                currentBranch = try await gitService.currentBranch(at: chat.workingDirectory)
+            } catch {
+                currentBranch = ""
+            }
+        }
     }
 }
